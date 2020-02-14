@@ -43,3 +43,18 @@ class TestKeysSetUp:
         keys = list(filter(lambda x: km.is_keyfile(os.path.join(keys_folder, x)), files_in_keys_dir))
         assert len(keys) == 4
         assert "ODKAI_V1_3_5.bikey" in keys
+
+    def test_should_first_clear_the_keys_folder_and_then_copy_the_keys_there(self, reset_folder_structure, mocker):
+        """Keys set up should first clear the keys folder and then copy the keys there."""
+        mocker.patch("arma_keysmanager.km.clear_keys_folder", side_effect=km.clear_keys_folder)
+        mocker.patch("arma_keysmanager.km.copy_keys", side_effect=km.copy_keys)
+        mods_list = ["ODKAI",
+                     "ace"]
+        mods_folder = os.path.join(os.path.abspath(test_folder_structure_name), "!Workshop")
+        keys_folder = os.path.join(os.path.abspath(test_folder_structure_name), "Keys")
+        km.set_up_keys(mods_list, mods_folder, keys_folder)
+        km.clear_keys_folder.assert_called_with(keys_folder)
+        km.copy_keys.assert_called_with(mods_list, mods_folder, keys_folder)
+        files_in_keys_dir = os.listdir(keys_folder)
+        keys = list(filter(lambda x: km.is_keyfile(os.path.join(keys_folder, x)), files_in_keys_dir))
+        assert len(keys) == 2

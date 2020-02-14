@@ -5,7 +5,7 @@ from typing import List
 
 
 def parse_preset(filename: str) -> List[str]:
-    """Parse an Arma preset and return the List of all selected mods names."""
+    """Parse an Arma 3 preset and return the List of all selected mods names."""
     # Open the preset file and read its content
     with open(filename, "r") as f:
         xml = f.read()
@@ -19,7 +19,7 @@ def parse_preset(filename: str) -> List[str]:
 
 
 def is_keyfile(filename: str) -> bool:
-    """Check if a file seems to be an Arma3 mod key."""
+    """Check if a file seems to be an Arma 3 mod key."""
     file_ext = os.path.splitext(filename)[-1].lower()
     return os.path.isfile(filename) and (file_ext == ".bikey")
 
@@ -33,7 +33,7 @@ def clear_keys_folder(folder_name: str) -> None:
 
 
 def copy_keys(mods_list: List[str], mods_folder: str, keys_folder: str) -> None:
-    """"""
+    """Copy all provided mods' keys into the keys_folder."""
     for mod_name in mods_list:
         mod_folder = os.path.join(mods_folder, "@" + mod_name)
         mod_key_folder = os.path.join(mod_folder, "keys")
@@ -44,3 +44,9 @@ def copy_keys(mods_list: List[str], mods_folder: str, keys_folder: str) -> None:
         shutil.copy(src, dest)
         # copy over the permissions,modification
         shutil.copystat(src, dest)
+
+
+def set_up_keys(mods_list: List[str], mods_folder: str, keys_folder: str) -> None:
+    """Clear the keys folder and then copy all provided mods' keys there."""
+    clear_keys_folder(keys_folder)
+    copy_keys(mods_list, mods_folder, keys_folder)
