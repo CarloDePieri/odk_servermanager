@@ -1,0 +1,17 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+keysmanager = {editable = true,path = "."}
+pytest = "*"
+pytest-sugar = "*"
+invoke = "*"
+
+[packages]
+beautifulsoup4 = "*"
+ipython = "*"
+
+[requires]
+python_version = "3.8"
