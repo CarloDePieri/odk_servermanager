@@ -5,7 +5,7 @@ preset_file_name = "tests/preset.html"
 
 class TestPresetImporting:
 
-    def test_should_parse_all_mods(self, reset_folder_structure):
+    def test_should_parse_all_mods(self):
         """The preset mechanism should parse all mod in the preset"""
         mods = parse_preset(preset_file_name)
         assert len(mods) == 4

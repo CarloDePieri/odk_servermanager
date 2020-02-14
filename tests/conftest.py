@@ -11,7 +11,7 @@ def _reset_folder_structure():
     """Reset the folder structure to test on"""
     # Delete the old folder if present
     if os.path.isdir(test_folder_structure_name):
-        shutil.rmtree(test_folder_structure_name)
+        shutil.rmtree(test_folder_structure_name, ignore_errors=True)
     # Extract a pristine folder structure
     with zipfile.ZipFile(test_folder_structure_zip, 'r') as zip_ref:
         zip_ref.extractall("./tests")
