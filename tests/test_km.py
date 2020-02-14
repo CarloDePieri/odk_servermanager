@@ -1,7 +1,6 @@
 import arma_keysmanager.km as km
 from conftest import test_folder_structure_name, test_preset_file_name
 import os
-import pytest
 
 
 class TestPresetImporting:
@@ -31,3 +30,16 @@ class TestKeysSetUp:
             f.write("0")
         km.clear_keys_folder(keys_folder)
         assert not os.path.isfile(test_key)
+
+    def test_should_copy_all_keys_to_the_keys_folder(self, reset_folder_structure):
+        mods_list = ["ODKAI",
+                     "3CB BAF Equipment",
+                     "ace",
+                     "Task Force Arrowhead Radio (BETA!!!)"]
+        mods_folder = os.path.join(os.path.abspath(test_folder_structure_name), "!Workshop")
+        keys_folder = os.path.join(os.path.abspath(test_folder_structure_name), "Keys")
+        km.copy_keys(mods_list, mods_folder, keys_folder)
+        files_in_keys_dir = os.listdir(keys_folder)
+        keys = list(filter(lambda x: km.is_keyfile(os.path.join(keys_folder, x)), files_in_keys_dir))
+        assert len(keys) == 4
+        assert "ODKAI_V1_3_5.bikey" in keys
