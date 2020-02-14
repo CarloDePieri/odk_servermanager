@@ -1,4 +1,4 @@
-from arma_keysmanager.km import parse_preset, clear_keys_folder
+import arma_keysmanager.km as km
 from conftest import test_folder_structure_name, test_preset_file_name
 import os
 import pytest
@@ -9,12 +9,12 @@ class TestPresetImporting:
 
     def test_should_parse_all_mods(self):
         """The preset mechanism should parse all mod in the preset"""
-        mods = parse_preset(test_preset_file_name)
+        mods = km.parse_preset(test_preset_file_name)
         assert len(mods) == 4
 
     def test_should_return_a_list_of_mod_names(self):
         """The preset mechanism should return a list of mod names"""
-        mods_name = parse_preset(test_preset_file_name)
+        mods_name = km.parse_preset(test_preset_file_name)
         assert isinstance(mods_name, list)
         assert isinstance(mods_name[0], str)
         assert "ODKAI" in mods_name
@@ -29,5 +29,5 @@ class TestKeysSetUp:
         test_key = os.path.join(keys_folder, "testkey.bikey")
         with open(test_key, "w+") as f:
             f.write("0")
-        clear_keys_folder(keys_folder)
+        km.clear_keys_folder(keys_folder)
         assert not os.path.isfile(test_key)
