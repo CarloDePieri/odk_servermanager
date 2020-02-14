@@ -4,6 +4,7 @@ import shutil
 import zipfile
 
 
+test_preset_file_name = "tests/preset.html"
 test_folder_structure_name = "tests/Arma"
 test_folder_structure_zip = "tests/folder_structure.zip"
 
