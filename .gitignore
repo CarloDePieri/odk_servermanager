@@ -1,6 +1,6 @@
 .venv
 .pytest_cache
-arma_keysmanager.egg-info
+odk_servermanager.egg-info
 tests/Arma
 .idea
-keysmanager.iml
+odksm.iml
