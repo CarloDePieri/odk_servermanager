@@ -2,7 +2,6 @@ from invoke import task
 
 
 TEST_FOLDER = "tests"
-PROJECT_FOLDER = "keysmanager"
 
 
 @task
@@ -29,9 +28,9 @@ def test(c):
 
 @task
 def test_this(c):
-    c.run("pipenv run pytest -s -p no:sugar -m 'runthis' {}".format(TEST_FOLDER))
+    c.run("pipenv run pytest -s -p no:sugar -m \"runthis\" {}".format(TEST_FOLDER))
 
 
-@task
-def run(c):
-    c.run("pipenv run python run.py")
+# @task
+# def run(c):
+    # c.run("pipenv run python run.py")
