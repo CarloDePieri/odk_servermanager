@@ -3,10 +3,12 @@ import pytest
 import shutil
 import zipfile
 
-
 test_preset_file_name = "tests/preset.html"
 test_folder_structure_name = "tests/Arma"
 test_folder_structure_zip = "tests/folder_structure.zip"
+
+
+def test_folder_structure_path(): return os.path.abspath(test_folder_structure_name)
 
 
 def _reset_folder_structure():
