@@ -1,6 +1,10 @@
 import os
 
 
+class DuplicateServerName(Exception):
+    """"""
+
+
 def symlink(source: str, link_name: str) -> None:
     """A symlink function that should work both on Windows and on Linux."""
     os_symlink = getattr(os, "symlink", None)
@@ -14,3 +18,12 @@ def symlink(source: str, link_name: str) -> None:
         flags = 1 if os.path.isdir(source) else 0
         if csl(link_name, source, flags) == 0:
             raise ctypes.WinError()
+
+
+def new_server_folder(server_name: str, server_root: str) -> None:
+    """Create a new server folder."""
+    server_folder = os.path.join(server_root, "__server__" + server_name)
+    if not os.path.isdir(server_folder):
+        os.mkdir(server_folder)
+    else:
+        raise DuplicateServerName()
