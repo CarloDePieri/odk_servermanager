@@ -35,7 +35,6 @@ class TestCreateInstance:
         with pytest.raises(DuplicateServerName) as err:
             sm.new_server_folder(server_name, self.test_path)
 
-    @pytest.mark.runthis
     def test_should_symlink_and_create_all_needed_stuff_from_the_main_folder(self, reset_folder_structure):
         """Create instance should symlink and create all needed stuff from the main folder."""
         server_name = "TestServer0"

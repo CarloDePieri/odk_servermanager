@@ -7,7 +7,7 @@ class DuplicateServerName(Exception):
 
 
 def symlink(source: str, link_name: str) -> None:
-    """A symlink function that should work both on Windows and on Linux."""
+    """A symlink function that should work both on Linux and Windows (old and new)."""
     import os
     os_symlink = getattr(os, "symlink", None)
     if callable(os_symlink):
@@ -22,14 +22,14 @@ def symlink(source: str, link_name: str) -> None:
             raise ctypes.WinError()
 
 
-def _make_server_name(server_name: str, server_root: str) -> str:
+def _compose_server_instance_path(server_name: str, server_root: str) -> str:
     """Compose the server folder name."""
     return join(server_root, "__server__" + server_name)
 
 
 def new_server_folder(server_name: str, server_root: str) -> None:
     """Create a new server folder."""
-    server_folder = _make_server_name(server_name, server_root)
+    server_folder = _compose_server_instance_path(server_name, server_root)
     if not isdir(server_folder):
         mkdir(server_folder)
     else:
@@ -37,16 +37,15 @@ def new_server_folder(server_name: str, server_root: str) -> None:
 
 
 def filter_symlinks(element: str) -> bool:
-    not_to_be_symlinked = [
-        "!Workshop",
-        "Keys"
-    ]
+    """Filter out certain directory that won't be symlinked."""
+    not_to_be_symlinked = ["!Workshop", "Keys"]
     return not (element.startswith("__server__") or element in not_to_be_symlinked)
 
 
 def prepare_server_core(server_name: str, server_root: str) -> None:
+    """Symlink or create all needed files and dir for a new server instance."""
     # make all needed symlink
-    server_folder = _make_server_name(server_name, server_root)
+    server_folder = _compose_server_instance_path(server_name, server_root)
     folder_list = listdir(server_root)
     to_be_linked = list(filter(lambda x: filter_symlinks(x), folder_list))
     for el in to_be_linked:
@@ -54,11 +53,7 @@ def prepare_server_core(server_name: str, server_root: str) -> None:
         dest = join(server_folder, el)
         symlink(src, dest)
     # Create the needed folder
-    to_be_created = [
-        "Keys",
-        "!Mods_linked",
-        "!Mods_copied",
-    ]
+    to_be_created = ["Keys", "!Mods_linked", "!Mods_copied"]
     for folder in to_be_created:
         folder = join(server_folder, folder)
         mkdir(folder)
