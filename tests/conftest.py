@@ -25,3 +25,9 @@ def _reset_folder_structure():
 def reset_folder_structure():
     """Reset the folder structure to test on"""
     _reset_folder_structure()
+
+
+@pytest.fixture("class")
+def class_reset_folder_structure():
+    """Reset the folder structure to test on"""
+    _reset_folder_structure()

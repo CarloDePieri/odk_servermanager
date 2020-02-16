@@ -1,5 +1,6 @@
 from os.path import join, isdir
 from os import listdir, mkdir
+from typing import List, Dict
 
 
 class DuplicateServerName(Exception):
@@ -57,3 +58,27 @@ def prepare_server_core(server_name: str, server_root: str) -> None:
     for folder in to_be_created:
         folder = join(server_folder, folder)
         mkdir(folder)
+
+
+def compile_bat_file(server_name: str, server_root: str, settings: Dict, mods_list: List[str]) -> None:
+    import pkg_resources
+    from jinja2 import Template
+
+    # recover template file
+    template_file_content = pkg_resources.resource_string('odk_servermanager', 'templates/run_server_template.txt')
+    template = Template(template_file_content.decode("UTF-8"))
+    # prepare some stuff
+    compiled_bat_path = join(_compose_server_instance_path(server_name, server_root), "run_server.bat")
+    # compile the template with all correct configuration and save the file
+    compiled = template.render(
+        server_title=settings["server_title"],
+        server_port=settings["server_port"],
+        server_max_mem=settings["server_max_mem"],
+        server_config=settings["server_config"],
+        server_cfg=settings["server_cfg"],
+        server_flags=settings["server_flags"],
+        server_drive=settings["server_drive"],
+        server_root=settings["server_root"]
+    )
+    with open(compiled_bat_path, "w+") as f:
+        f.write(compiled)

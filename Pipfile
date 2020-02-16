@@ -11,6 +11,7 @@ pytest-sugar = "*"
 
 [packages]
 beautifulsoup4 = "*"
+Jinja2 = "*"
 
 [requires]
 python_version = "3.8"

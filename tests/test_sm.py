@@ -57,3 +57,41 @@ class TestCreateInstance:
         assert isdir(keys_folder) and not islink(keys_folder)
         assert isdir(mods_copied_folder) and not islink(mods_copied_folder)
         assert isdir(mods_linked_folder) and not islink(mods_linked_folder)
+
+
+@pytest.mark.runthis
+class TestCompileBat:
+    """Test: CompileBat..."""
+
+    @pytest.fixture(scope="class", autouse=True)
+    def setup(self, request, class_reset_folder_structure):
+        """TestCompileBat setup"""
+        test_path = test_folder_structure_path()
+        server_name = "TestServer0"
+        mods_list = ["ODKAI",
+                     "3CB BAF Equipment",
+                     "ace",
+                     "Task Force Arrowhead Radio (BETA!!!)"]
+        settings = {
+            "server_title": "ODK Training Server",
+            "server_drive": "C:",
+            "server_root": r'"C:\Program Files (x86)\Steam\steamapps\common\Arma 3"',
+            "server_port": "2202",
+            "server_config": "serverTraining.cfg",
+            "server_cfg": "Arma3Training.cfg",
+            "server_max_mem": "8192",
+            "server_flags": "-filePatching -autoinit -enableHT"
+        }
+        sm.compile_bat_file(server_name, test_path, settings, mods_list)
+        server_folder = join(test_path, sm._compose_server_instance_path(server_name, test_path))
+        request.cls.compiled_bat = join(server_folder, "run_server.bat")
+
+    def test_should_create_the_bat_file(self):
+        """Compile bat should create the bat file."""
+        assert isfile(self.compiled_bat)
+
+    def test_should_correctly_fill_out_settings(self):
+        """Compile bat should correctly fill out settings."""
+        test_bat = join("tests", "run_server.bat")
+        with open(test_bat, "r") as test, open(self.compiled_bat, "r") as compiled:
+            assert test.read() == compiled.read()
