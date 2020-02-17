@@ -25,7 +25,7 @@ class TestCreateInstance:
     def test_should_create_a_new_folder_with_a_given_name(self, reset_folder_structure):
         """Create instance should create a new folder with a given name."""
         server_name = "TestServer1"
-        sm.new_server_folder(server_name, self.test_path)
+        sm.new_server_folder(server_name)
         assert isdir(join(self.test_path, "__server__" + server_name))
 
     def test_should_raise_an_error_with_an_already_existing_server_instance(self, reset_folder_structure):
@@ -33,13 +33,14 @@ class TestCreateInstance:
         server_name = "TestServer0"
         from odk_servermanager.sm import DuplicateServerName
         with pytest.raises(DuplicateServerName) as err:
-            sm.new_server_folder(server_name, self.test_path)
+            sm.new_server_folder(server_name)
 
-    def test_should_symlink_and_create_all_needed_stuff_from_the_main_folder(self, reset_folder_structure):
+    def test_should_symlink_and_create_all_needed_stuff_from_the_main_folder(self, reset_folder_structure, mocker):
         """Create instance should symlink and create all needed stuff from the main folder."""
         server_name = "TestServer0"
         server_folder = join(self.test_path, "__server__" + server_name)
-        sm.prepare_server_core(server_name, self.test_path)
+        mocker.patch("odk_servermanager.sm.ARMA_FOLDER", self.test_path)
+        sm.prepare_server_core(server_name)
         # Check that it didn't copy over the wrong stuff
         assert not isdir(join(server_folder, "!Workshop"))
         assert not isdir(join(server_folder, "__server__TestServer0"))
@@ -59,7 +60,7 @@ class TestCreateInstance:
         assert isdir(mods_linked_folder) and not islink(mods_linked_folder)
 
 
-@pytest.mark.runthis
+
 class TestCompileBat:
     """Test: CompileBat..."""
 
@@ -80,8 +81,8 @@ class TestCompileBat:
             "server_max_mem": "8192",
             "server_flags": "-filePatching -autoinit -enableHT"
         }
-        sm.compile_bat_file(server_name, test_path, settings, user_mods_list, server_mods_list)
-        server_folder = join(test_path, sm._compose_server_instance_path(server_name, test_path))
+        sm.compile_bat_file(server_name, settings, user_mods_list, server_mods_list)
+        server_folder = join(test_path, sm._get_server_instance_path(server_name))
         request.cls.compiled_bat = join(server_folder, "run_server.bat")
 
     def test_should_create_the_bat_file(self):
@@ -102,3 +103,8 @@ class TestUtils:
         """Utils for composing mods relative path should work."""
         assert sm._compose_relative_path_copied_mods("CBA_A3") == "!Mods_copied/@CBA_A3"
         assert sm._compose_relative_path_linked_mods("ace") == "!Mods_linked/@ace"
+
+    def test_should_be_able_to_get_a_server_instance_path(self):
+        """Utils should be able to get a server instance path."""
+        from conftest import test_folder_structure_path
+        assert sm._get_server_instance_path("Server1") == test_folder_structure_path() + r"\__server__Server1"

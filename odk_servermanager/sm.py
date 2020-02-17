@@ -3,10 +3,12 @@ from os import listdir, mkdir
 from typing import List, Dict
 
 # CONFIG - put these here for now
+ARMA_FOLDER = r"C:\Program Files (x86)\Steam\steamapps\common\Arma 3"
 MODS_TO_BE_COPIED = ["CBA_A3"]
 LINKED_MOD_FOLDER_NAME = "!Mods_linked"
 COPIED_MOD_FOLDER_NAME = "!Mods_copied"
 SERVER_INSTANCE_PREFIX = "__server__"
+SERVER_INSTANCE_ROOT = ARMA_FOLDER
 
 
 class DuplicateServerName(Exception):
@@ -29,14 +31,14 @@ def symlink(source: str, link_name: str) -> None:
             raise ctypes.WinError()
 
 
-def _compose_server_instance_path(server_name: str, server_root: str) -> str:
-    """Compose the server folder name."""
-    return join(server_root, SERVER_INSTANCE_PREFIX + server_name)
+def _get_server_instance_path(server_name: str) -> str:
+    """Return the server instance path."""
+    return join(SERVER_INSTANCE_ROOT, SERVER_INSTANCE_PREFIX + server_name)
 
 
-def new_server_folder(server_name: str, server_root: str) -> None:
+def new_server_folder(server_name: str) -> None:
     """Create a new server folder."""
-    server_folder = _compose_server_instance_path(server_name, server_root)
+    server_folder = _get_server_instance_path(server_name)
     if not isdir(server_folder):
         mkdir(server_folder)
     else:
@@ -49,14 +51,14 @@ def filter_symlinks(element: str) -> bool:
     return not (element.startswith(SERVER_INSTANCE_PREFIX) or element in not_to_be_symlinked)
 
 
-def prepare_server_core(server_name: str, server_root: str) -> None:
+def prepare_server_core(server_name: str) -> None:
     """Symlink or create all needed files and dir for a new server instance."""
     # make all needed symlink
-    server_folder = _compose_server_instance_path(server_name, server_root)
-    folder_list = listdir(server_root)
-    to_be_linked = list(filter(lambda x: filter_symlinks(x), folder_list))
+    server_folder = _get_server_instance_path(server_name)
+    arma_folder_list = listdir(ARMA_FOLDER)
+    to_be_linked = list(filter(lambda x: filter_symlinks(x), arma_folder_list))
     for el in to_be_linked:
-        src = join(server_root, el)
+        src = join(ARMA_FOLDER, el)
         dest = join(server_folder, el)
         symlink(src, dest)
     # Create the needed folder
@@ -88,7 +90,7 @@ def _compose_relative_path_mods(mods_list: List[str]) -> str:
     return user_mods
 
 
-def compile_bat_file(server_name: str, server_root: str, settings: Dict, user_mods_list: List[str], server_mods_list: List[str]) -> None:
+def compile_bat_file(server_name: str, settings: Dict, user_mods_list: List[str], server_mods_list: List[str]) -> None:
     """Compile an instance specific bat file to run the server."""
     import pkg_resources
     from jinja2 import Template
@@ -96,7 +98,7 @@ def compile_bat_file(server_name: str, server_root: str, settings: Dict, user_mo
     template_file_content = pkg_resources.resource_string('odk_servermanager', 'templates/run_server_template.txt')
     template = Template(template_file_content.decode("UTF-8"))
     # prepare needed elements
-    compiled_bat_path = join(_compose_server_instance_path(server_name, server_root), "run_server.bat")
+    compiled_bat_path = join(_get_server_instance_path(server_name), "run_server.bat")
     user_mods = _compose_relative_path_mods(user_mods_list)
     server_mods = _compose_relative_path_mods(server_mods_list)
     # compile the template with all correct configuration and save the file
