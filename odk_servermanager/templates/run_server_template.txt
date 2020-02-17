@@ -1,3 +1,9 @@
+::--------------------------------------------------------------------------------------------
+::                                                                                           |
+::                                 == ODK SERVER MANAGER ==                                  |
+::                                                                                           |
+:: This is a generated file! DO NOT EDIT IT BY HAND. Use server instance configuration file. |
+::--------------------------------------------------------------------------------------------
 @echo off
 color 0b
 title {{ server_title }} Monitor
@@ -9,7 +15,7 @@ echo Launching Server %date% %time%
 {{ server_drive }}
 cd {{ server_root }}
 echo {{ server_title }} Monitor... Active !
-start "Arma3" /min /wait arma3server_x64.exe -port={{ server_port }} -config={{ server_config }} -cfg={{ server_cfg }} -maxMem={{ server_max_mem }} {{ server_flags }} -mod=@CBA_A3;@ace;@ODKAI; -servermod=@ODKMIN;@AdvProp;
+start "Arma3" /min /wait arma3server_x64.exe -port={{ server_port }} -config={{ server_config }} -cfg={{ server_cfg }} -maxMem={{ server_max_mem }} {{ server_flags }} -mod="{{ user_mods }}" -servermod="{{ server_mods }}"
 ping 127.0.0.1 -n 15 >NUL
 echo {{ server_title }} Shutdown ... Restarting!
 ping 127.0.0.1 -n 5 >NUL

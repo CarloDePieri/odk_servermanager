@@ -68,10 +68,8 @@ class TestCompileBat:
         """TestCompileBat setup"""
         test_path = test_folder_structure_path()
         server_name = "TestServer0"
-        mods_list = ["ODKAI",
-                     "3CB BAF Equipment",
-                     "ace",
-                     "Task Force Arrowhead Radio (BETA!!!)"]
+        user_mods_list = ["ace", "CBA_A3", "ODKAI"]
+        server_mods_list = ["AdvProp", "ODKMIN"]
         settings = {
             "server_title": "ODK Training Server",
             "server_drive": "C:",
@@ -82,7 +80,7 @@ class TestCompileBat:
             "server_max_mem": "8192",
             "server_flags": "-filePatching -autoinit -enableHT"
         }
-        sm.compile_bat_file(server_name, test_path, settings, mods_list)
+        sm.compile_bat_file(server_name, test_path, settings, user_mods_list, server_mods_list)
         server_folder = join(test_path, sm._compose_server_instance_path(server_name, test_path))
         request.cls.compiled_bat = join(server_folder, "run_server.bat")
 
@@ -95,3 +93,12 @@ class TestCompileBat:
         test_bat = join("tests", "run_server.bat")
         with open(test_bat, "r") as test, open(self.compiled_bat, "r") as compiled:
             assert test.read() == compiled.read()
+
+
+class TestUtils:
+    """Test: Utils..."""
+
+    def test_for_composing_mods_relative_path_should_work(self):
+        """Utils for composing mods relative path should work."""
+        assert sm._compose_relative_path_copied_mods("CBA_A3") == "!Mods_copied/@CBA_A3"
+        assert sm._compose_relative_path_linked_mods("ace") == "!Mods_linked/@ace"
