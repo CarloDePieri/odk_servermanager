@@ -1,6 +1,6 @@
 .venv
 .pytest_cache
 odk_servermanager.egg-info
-tests/Arma
+tests/resources/Arma
 .idea
 odksm.iml

@@ -13,6 +13,7 @@ def clean_cache(c):
 @task
 def clean_test_cache(c):
     print("Cleaning test cache.")
+    c.run("rm -rf {}/resources/Arma".format(TEST_FOLDER))
     c.run("rm -rf {}/.pytest_cache".format(TEST_FOLDER))
 
 

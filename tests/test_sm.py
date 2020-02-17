@@ -90,7 +90,7 @@ class TestCompileBat:
 
     def test_should_correctly_fill_out_settings(self):
         """Compile bat should correctly fill out settings."""
-        test_bat = join("tests", "run_server.bat")
+        test_bat = join("tests", "resources", "run_server.bat")
         with open(test_bat, "r") as test, open(self.compiled_bat, "r") as compiled:
             assert test.read() == compiled.read()
 
