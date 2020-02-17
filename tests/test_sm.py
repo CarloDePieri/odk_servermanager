@@ -59,6 +59,21 @@ class TestCreateInstance:
         assert isdir(mods_copied_folder) and not islink(mods_copied_folder)
         assert isdir(mods_linked_folder) and not islink(mods_linked_folder)
 
+    def test_should_init_copied_and_linked_mods(self, reset_folder_structure):
+        """Create instance should init copied and linked mods."""
+        user_mods_list = ["ace", "CBA_A3", "ODKAI"]
+        server_name = "TestServer0"
+        server_folder = join(self.test_path, "__server__" + server_name)
+        # ensure the mod folders are there
+        from os import mkdir
+        mkdir(join(server_folder, "!Mods_copied"))
+        mkdir(join(server_folder, "!Mods_linked"))
+        sm.init_mods(user_mods_list, server_name)
+        cba_folder = join(server_folder, "!Mods_copied", "@CBA_A3")
+        assert isdir(cba_folder) and not islink(cba_folder)
+        assert islink(join(server_folder, "!Mods_linked", "@ace"))
+        assert islink(join(server_folder, "!Mods_linked", "@ODKAI"))
+        assert islink(join(server_folder, "!Mods_linked", "!DO_NOT_CHANGE_FILES_IN_THESE_FOLDERS"))
 
 
 class TestCompileBat:

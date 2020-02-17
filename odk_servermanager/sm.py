@@ -1,6 +1,10 @@
+import shutil
 from os.path import join, isdir
 from os import listdir, mkdir
 from typing import List, Dict
+
+from utils import symlink
+
 
 # CONFIG - put these here for now
 ARMA_FOLDER = r"C:\Program Files (x86)\Steam\steamapps\common\Arma 3"
@@ -13,22 +17,6 @@ SERVER_INSTANCE_ROOT = ARMA_FOLDER
 
 class DuplicateServerName(Exception):
     """"""
-
-
-def symlink(source: str, link_name: str) -> None:
-    """A symlink function that should work both on Linux and Windows (old and new)."""
-    import os
-    os_symlink = getattr(os, "symlink", None)
-    if callable(os_symlink):
-        os_symlink(source, link_name)
-    else:
-        import ctypes
-        csl = ctypes.windll.kernel32.CreateSymbolicLinkW
-        csl.argtypes = (ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_uint32)
-        csl.restype = ctypes.c_ubyte
-        flags = 1 if isdir(source) else 0
-        if csl(link_name, source, flags) == 0:
-            raise ctypes.WinError()
 
 
 def _get_server_instance_path(server_name: str) -> str:
@@ -116,3 +104,21 @@ def compile_bat_file(server_name: str, settings: Dict, user_mods_list: List[str]
     )
     with open(compiled_bat_path, "w+") as f:
         f.write(compiled)
+
+
+def init_mods(mods_list: List[str], server_name: str) -> None:
+    """This will link mods to an instance, copying or symlinking them."""
+    server_folder = _get_server_instance_path(server_name)
+    workshop_folder = join(ARMA_FOLDER, "!Workshop")
+    for mod in mods_list:
+        mod_folder = "@" + mod
+        if mod in MODS_TO_BE_COPIED:
+            fun = shutil.copytree  # this will actually copy the mod
+            target_folder = join(server_folder, COPIED_MOD_FOLDER_NAME)
+        else:
+            fun = symlink  # this will simply symlink the mod
+            target_folder = join(server_folder, LINKED_MOD_FOLDER_NAME)
+        fun(join(workshop_folder, mod_folder), join(target_folder, mod_folder))
+    linked_mod_folder = join(server_folder, LINKED_MOD_FOLDER_NAME)
+    warning_folder = "!DO_NOT_CHANGE_FILES_IN_THESE_FOLDERS"
+    symlink(join(workshop_folder, warning_folder), join(linked_mod_folder, warning_folder))
