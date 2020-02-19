@@ -1,6 +1,7 @@
-import odk_servermanager.sm as sm
 from conftest import test_folder_structure_path
 from os.path import islink, isfile, join
+
+from odk_servermanager.utils import symlink
 
 
 class TestSymlinkFunction:
@@ -11,6 +12,6 @@ class TestSymlinkFunction:
         test_path = test_folder_structure_path()
         src = join(test_path, "TestFolder1")
         dest = join(test_path, "__server__TestServer0", "TestFolder1")
-        sm.symlink(src, dest)
+        symlink(src, dest)
         assert islink(dest)
         assert isfile(join(dest, "testFile1.txt"))

@@ -12,6 +12,7 @@ pytest-sugar = "*"
 [packages]
 beautifulsoup4 = "*"
 Jinja2 = "*"
+python-box = "*"
 
 [requires]
 python_version = "3.8"

@@ -12,17 +12,6 @@ test_folder_structure_zip = test_resources + "folder_structure.zip"
 def test_folder_structure_path(): return os.path.abspath(test_folder_structure_name)
 
 
-@pytest.fixture(scope="session", autouse=True)
-def pre_test():
-    # prepare something ahead of all tests
-    from unittest.mock import patch
-    # overwrite some configuration
-    test_root = test_folder_structure_path()
-    with patch("odk_servermanager.sm.SERVER_INSTANCE_ROOT", test_root), \
-         patch("odk_servermanager.sm.ARMA_FOLDER", test_root):
-        yield
-
-
 def _reset_folder_structure():
     """Reset the folder structure to test on"""
     # Delete the old folder if present
