@@ -1,4 +1,4 @@
-import odk_servermanager.km as km
+import odk_servermanager.keysmanager as km
 from conftest import test_folder_structure_name, test_preset_file_name
 import os
 
@@ -44,10 +44,11 @@ class TestKeysSetUp:
         assert len(keys) == 4
         assert "ODKAI_V1_3_5.bikey" in keys
 
-    def test_should_first_clear_the_keys_folder_and_then_copy_the_keys_there(self, reset_folder_structure, mocker):
+    def test_should_first_clear_the_keys_folder_and_then_copy_the_keys_there(self, reset_folder_structure,
+                                                                             observe_function):
         """Keys set up should first clear the keys folder and then copy the keys there."""
-        mocker.patch("odk_servermanager.km.clear_keys_folder", side_effect=km.clear_keys_folder)
-        mocker.patch("odk_servermanager.km.copy_keys", side_effect=km.copy_keys)
+        observe_function(km.clear_keys_folder)
+        observe_function(km.copy_keys)
         mods_list = ["ODKAI", "ace"]
         mods_folder = os.path.join(os.path.abspath(test_folder_structure_name), "!Workshop")
         keys_folder = os.path.join(os.path.abspath(test_folder_structure_name), "Keys")

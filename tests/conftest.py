@@ -1,4 +1,6 @@
 import os
+from typing import Callable
+
 import pytest
 import shutil
 import zipfile
@@ -32,3 +34,14 @@ def reset_folder_structure():
 def class_reset_folder_structure():
     """Reset the folder structure to test on"""
     _reset_folder_structure()
+
+
+@pytest.fixture()
+def observe_function(mocker):
+    """Mock the provided function, setting as side effect the function itself.
+    This allows to normally execute the function and to observe its calls."""
+    def _wrapper(function: Callable):
+        # noinspection PyUnresolvedReferences
+        name = function.__module__ + "." + function.__name__
+        return mocker.patch(name, side_effect=function)
+    return _wrapper
