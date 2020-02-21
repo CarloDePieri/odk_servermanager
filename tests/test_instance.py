@@ -149,6 +149,14 @@ class TestOurTestServerInstance(ODKSMTest):
         assert isdir(mods_copied_folder) and not islink(mods_copied_folder)
         assert isdir(mods_linked_folder) and not islink(mods_linked_folder)
 
+    def test_should_protect_run_server_bat(self, reset_folder_structure):
+        """Our test server instance should protect run_server.bat."""
+        server_folder = join(self.test_path, "__server__" + self.instance.S.server_instance_name)
+        with open(join(self.test_path, "run_server.bat"), "w+") as f:
+            f.write("protected")
+        self.instance._prepare_server_core()
+        assert not islink(join(server_folder, "run_server.bat"))
+
     def test_should_init_copied_and_linked_mods(self, reset_folder_structure):
         """Create instance should init copied and linked mods."""
         user_mods_list = ["ace", "CBA_A3", "ODKAI"]
@@ -195,7 +203,6 @@ class TestOurTestServerInstance(ODKSMTest):
         assert len(keys_folder_files) == len(self.instance.S.user_mods_list) + len(self.instance.S.server_mods_list)
 
 
-@pytest.mark.runthis
 class TestServerInstanceInit(ODKSMTest):
     """Test: ServerInstance init..."""
 

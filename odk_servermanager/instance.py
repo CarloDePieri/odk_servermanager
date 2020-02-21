@@ -95,7 +95,7 @@ class ServerInstance:
 
     def _filter_symlinks(self, element: str) -> bool:
         """Filter out certain directory that won't be symlinked."""
-        not_to_be_symlinked = ["!Workshop", self.keys_folder_name]
+        not_to_be_symlinked = ["!Workshop", self.keys_folder_name, "run_server.bat"]
         return not (element.startswith(self.S.server_instance_prefix) or element in not_to_be_symlinked)
 
     def _prepare_server_core(self) -> None:
