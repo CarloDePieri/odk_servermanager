@@ -1,7 +1,8 @@
 from os.path import isdir, isfile, islink, join, splitdrive
+from os import listdir, mkdir
 import pytest
 
-from conftest import test_folder_structure_path
+from conftest import test_folder_structure_path, spy
 from odksm_test import ODKSMTest
 from odk_servermanager.instance import ServerInstance, ServerInstanceSettings
 
@@ -152,12 +153,9 @@ class TestOurTestServerInstance(ODKSMTest):
         """Create instance should init copied and linked mods."""
         user_mods_list = ["ace", "CBA_A3", "ODKAI"]
         server_folder = join(self.test_path, "__server__" + self.instance.S.server_instance_name)
-
         # ensure the mod folders are there
-        from os import mkdir
         mkdir(join(server_folder, "!Mods_copied"))
         mkdir(join(server_folder, "!Mods_linked"))
-
         self.instance._init_mods(user_mods_list)
         cba_folder = join(server_folder, "!Mods_copied", "@CBA_A3")
         assert isdir(cba_folder) and not islink(cba_folder)
@@ -174,3 +172,89 @@ class TestOurTestServerInstance(ODKSMTest):
         """Our test server instance should be able to get the server instance path."""
         path = self.test_path + r"\__server__" + self.instance.S.server_instance_name
         assert self.instance._get_server_instance_path() == path
+
+    def test_should_be_able_to_recognize_a_key_file(self, reset_folder_structure):
+        """Our test server instance should be able to recognize a key file."""
+        assert self.instance._is_keyfile(join(self.test_path, "!Workshop", "@ace", "keys", "ace_3.13.0.45.bikey"))
+        assert not self.instance._is_keyfile(join(self.test_path, "testFile0.txt"))
+
+    def test_should_be_able_to_symlink_all_needed_keys(self, reset_folder_structure):
+        """Our test server instance should be able to symlink all needed keys."""
+        # THIS TEST DEPENDS ON _prepare_server_core AND _init_mods ... would be too long to set up otherwise
+        user_mods_list = ["ace", "CBA_A3", "ODKAI"]
+        server_mods_list = ["ODKMIN"]
+        self.instance.S.user_mods_list = user_mods_list
+        self.instance.S.server_mods_list = server_mods_list
+        self.instance._prepare_server_core()
+        self.instance._init_mods(user_mods_list)
+        self.instance._init_mods(server_mods_list)
+        keys_folder = join(self.instance._get_server_instance_path(), self.instance.keys_folder_name)
+        # end setup, begin actual test
+        self.instance._link_keys()
+        keys_folder_files = listdir(keys_folder)
+        assert len(keys_folder_files) == len(self.instance.S.user_mods_list) + len(self.instance.S.server_mods_list)
+
+
+@pytest.mark.runthis
+class TestServerInstanceInit(ODKSMTest):
+    """Test: ServerInstance init..."""
+
+    @pytest.fixture(scope="class", autouse=True)
+    def setup(self, request, class_reset_folder_structure):
+        """TestServerInstanceInit setup"""
+        server_name = "TestServer1"
+        request.cls.test_path = test_folder_structure_path()
+        request.cls.settings = ServerInstanceSettings(
+            server_name,
+            mods_to_be_copied=["CBA_A3"],
+            user_mods_list=["ace", "CBA_A3", "ODKAI"],
+            server_mods_list=["AdvProp", "ODKMIN"],
+            arma_folder=self.test_path,
+            server_instance_root=self.test_path,
+            server_title="ODK Training Server",
+            server_port="2202",
+            server_config="serverTraining.cfg",
+            server_cfg="Arma3Training.cfg",
+            server_max_mem="8192",
+            server_flags="-filePatching -autoinit -enableHT"
+        )
+        request.cls.instance = ServerInstance(self.settings)
+        request.cls.instance_folder = self.instance._get_server_instance_path()
+        # set up all needed spies
+        with spy(self.instance._new_server_folder) as request.cls.new_server_fun, \
+                spy(self.instance._prepare_server_core) as request.cls.prepare_server_fun, \
+                spy(self.instance._init_mods) as request.cls.init_mods_fun, \
+                spy(self.instance._link_keys) as request.cls.init_keys_fun, \
+                spy(self.instance._compile_bat_file) as request.cls.compiled_bat_fun:
+            self.instance.init()
+
+    def test_should_create_the_folder_if_needed(self):
+        """Server instance init should create the folder if needed."""
+        self.new_server_fun.assert_called()
+        assert isdir(self.instance_folder)
+
+    def test_should_symlink_all_needed_arma_files(self):
+        """Server instance init should symlink all needed arma files."""
+        self.prepare_server_fun.assert_called()
+        assert isdir(join(self.instance_folder, "Keys"))
+
+    def test_should_copy_and_symlink_all_mods(self):
+        """Server instance init should copy and symlink all mods."""
+        from unittest.mock import call
+        ca = call(self.instance.S.user_mods_list)
+        cb = call(self.instance.S.server_mods_list)
+        self.init_mods_fun.assert_has_calls([ca, cb])
+        assert isdir(join(self.instance_folder, self.instance.S.copied_mod_folder_name, "@CBA_A3"))
+        assert islink(join(self.instance_folder, self.instance.S.linked_mod_folder_name, "@ace"))
+
+    def test_should_symlink_all_mods_keys(self):
+        """Server instance init should symlink all mods keys."""
+        self.init_keys_fun.assert_called()
+        keys_folder = join(self.instance._get_server_instance_path(), self.instance.keys_folder_name)
+        keys_folder_files = listdir(keys_folder)
+        assert len(keys_folder_files) == len(self.instance.S.user_mods_list) + len(self.instance.S.server_mods_list)
+
+    def test_should_generate_the_bat_file(self):
+        """Server instance init should generate the bat file."""
+        self.compiled_bat_fun.assert_called()
+        assert isfile(join(self.instance_folder, "run_server.bat"))

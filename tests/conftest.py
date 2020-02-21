@@ -1,9 +1,9 @@
 import os
-from typing import Callable
-
 import pytest
 import shutil
 import zipfile
+from typing import Callable
+from unittest.mock import patch
 
 test_resources = "tests/resources/"
 test_preset_file_name = test_resources + "preset.html"
@@ -45,3 +45,8 @@ def observe_function(mocker):
         name = function.__module__ + "." + function.__name__
         return mocker.patch(name, side_effect=function)
     return _wrapper
+
+
+def spy(method: Callable):
+    # noinspection PyUnresolvedReferences
+    return patch.object(method.__self__, method.__name__, wraps=method)
