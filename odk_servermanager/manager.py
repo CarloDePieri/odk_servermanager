@@ -14,6 +14,12 @@ class ServerManager:
         parsed_xml = BeautifulSoup(xml, 'html.parser')
         mods_data = parsed_xml.select("tr[data-type=\"ModContainer\"]")
         mods_name = list(map(
-            lambda x: x.select_one("td[data-type=\"DisplayName\"]").text,
+            lambda x: self._display_name_filter(x.select_one("td[data-type=\"DisplayName\"]").text),
             mods_data))
         return mods_name
+
+    @staticmethod
+    def _display_name_filter(name: str) -> str:
+        """Fix some display names peculiarities."""
+        return name.replace(":", "-")
+

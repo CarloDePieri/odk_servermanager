@@ -192,11 +192,14 @@ class ServerInstance:
         for mod_folder_name in filter(lambda x: x not in self.S.skip_keys, listdir(folder)):
             mod_folder = abspath(join(folder, mod_folder_name))
             # look for the key folder there
-            mod_key_folder = join(mod_folder, next(filter(lambda name: name.lower() == "keys", listdir(mod_folder))))
-            key_file = list(filter(lambda x: self._is_keyfile(join(mod_key_folder, x)), listdir(mod_key_folder)))[0]
-            src = join(mod_key_folder, key_file)
-            dest = join(self._get_server_instance_path(), self.keys_folder_name, key_file)
-            symlink(src, dest)
+            key_folder = list(filter(lambda name: name.lower() == "keys" or name.lower() == "key", listdir(mod_folder)))
+            if len(key_folder) > 0:
+                # if there's one, the key inside needs to be linked over the main key folder
+                mod_key_folder = join(mod_folder, key_folder[0])
+                key_file = list(filter(lambda x: self._is_keyfile(join(mod_key_folder, x)), listdir(mod_key_folder)))[0]
+                src = join(mod_key_folder, key_file)
+                dest = join(self._get_server_instance_path(), self.keys_folder_name, key_file)
+                symlink(src, dest)
 
     def _link_keys(self) -> None:
         """Link all keys from the copied and the linked mod folders to the instance keys folder."""

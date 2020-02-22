@@ -24,3 +24,4 @@ class TestPresetImporting(ODKSMTest):
         assert isinstance(mods_name, list)
         assert isinstance(mods_name[0], str)
         assert "ODKAI" in mods_name
+        assert "ACE Compat - RHS- GREF"  # this checks for a filter fix on the name

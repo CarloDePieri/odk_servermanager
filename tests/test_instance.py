@@ -202,6 +202,21 @@ class TestOurTestServerInstance(ODKSMTest):
         keys_folder_files = listdir(keys_folder)
         assert len(keys_folder_files) == len(self.instance.S.user_mods_list) + len(self.instance.S.server_mods_list)
 
+    @pytest.mark.runthis
+    def test_should_simply_skip_mods_without_keys_when_linking_keys(self, reset_folder_structure):
+        """Our test server instance should simply skip mods without keys when linking keys."""
+        copied_mods = join(self.instance._get_server_instance_path(), "!Mods_copied")
+        mkdir(join(self.instance._get_server_instance_path(), "!Mods_linked"))
+        keys_folder = join(self.instance._get_server_instance_path(), "Keys")
+        mkdir(copied_mods)
+        mkdir(keys_folder)
+        mkdir(join(copied_mods, "test_mod"))
+        self.instance.S.mods_to_be_copied = ["test_mod"]
+        self.instance.S.user_mods_list = ["test_mod"]
+        self.instance.S.server_mods_list = []
+        self.instance._link_keys()
+        assert len(listdir(keys_folder)) == 0
+
 
 class TestServerInstanceInit(ODKSMTest):
     """Test: ServerInstance init..."""
