@@ -1,22 +1,6 @@
 import odk_servermanager.keysmanager as km
-from conftest import test_folder_structure_name, test_preset_file_name
+from conftest import test_folder_structure_name
 import os
-
-
-class TestPresetImporting:
-    """The preset mechanism should..."""
-
-    def test_should_parse_all_mods(self):
-        """The preset mechanism should parse all mod in the preset"""
-        mods = km.parse_preset(test_preset_file_name)
-        assert len(mods) == 4
-
-    def test_should_return_a_list_of_mod_names(self):
-        """The preset mechanism should return a list of mod names"""
-        mods_name = km.parse_preset(test_preset_file_name)
-        assert isinstance(mods_name, list)
-        assert isinstance(mods_name[0], str)
-        assert "ODKAI" in mods_name
 
 
 class TestKeysSetUp:
@@ -45,7 +29,7 @@ class TestKeysSetUp:
         assert "ODKAI_V1_3_5.bikey" in keys
 
     def test_should_first_clear_the_keys_folder_and_then_copy_the_keys_there(self, reset_folder_structure,
-                                                                             observe_function):
+                                                                             observe_function, mocker):
         """Keys set up should first clear the keys folder and then copy the keys there."""
         observe_function(km.clear_keys_folder)
         observe_function(km.copy_keys)
