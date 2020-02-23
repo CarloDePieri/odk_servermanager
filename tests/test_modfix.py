@@ -1,4 +1,4 @@
-from os.path import isdir, join
+from os.path import isdir, join, islink
 from typing import Callable, List
 
 import pytest
@@ -33,7 +33,6 @@ class TestAModFix(ODKSMTest):
         assert isinstance(registered_fix, List)
 
 
-@pytest.mark.runthis
 class TestAServerInstance(ODKSMTest):
     """Test: A Server Instance ..."""
 
@@ -79,4 +78,47 @@ class TestAServerInstance(ODKSMTest):
         self.instance.registered_fix = [ModFix(name="ace", hook_replace=self.dummy_hook)]
         self.instance._init_mods(["ace"])
         df.assert_called_with(self.instance)
-        assert not isdir(join(self.instance._get_server_instance_path(), self.instance.S.copied_mod_folder_name, "@ace"))
+        assert not isdir(join(self.instance._get_server_instance_path(),
+                              self.instance.S.copied_mod_folder_name, "@ace"))
+
+
+class TestModFixCba(ODKSMTest):
+    """Test: ModFix cba..."""
+
+    @pytest.fixture(scope="class", autouse=True)
+    def setup(self, request, class_reset_folder_structure):
+        """TestModFixCba setup"""
+        from odk_servermanager.instance import ServerInstanceSettings, ServerInstance
+        request.cls.test_path = test_folder_structure_path()
+        custom_cba = join(self.test_path, "cba_settings.sqf")
+        with open(custom_cba, "w+") as f:
+            f.write("test")
+        settings = ServerInstanceSettings("test", user_mods_list=["CBA_A3"], mods_to_be_copied=["CBA_A3"],
+                                          arma_folder=self.test_path, server_instance_root=self.test_path,
+                                          mod_fix_settings={"cba_settings": custom_cba})
+        request.cls.instance = ServerInstance(settings)
+        self.instance._new_server_folder()
+        self.instance._prepare_server_core()
+        self.instance._init_mods(["CBA_A3"])
+        request.cls.mod_folder = join(self.instance._get_server_instance_path(),
+                                      self.instance.S.copied_mod_folder_name, "@CBA_A3")
+
+    def test_should_create_the_folder(self):
+        """Mod fix cba should create the folder."""
+        assert isdir(self.mod_folder)
+
+    def test_should_link_everything_but_the_userconfig_folder(self):
+        """Mod fix cba should link everything but the userconfig folder."""
+        assert islink(join(self.mod_folder, "keys"))
+        assert not islink(join(self.mod_folder, "userconfig"))
+
+    def test_should_create_the_userconfig_folder(self):
+        """Mod fix cba should create the userconfig folder."""
+        assert isdir(join(self.mod_folder, "userconfig"))
+
+    def test_should_link_the_custom_cba_settings(self):
+        """Mod fix cba should link the custom cba settings."""
+        cba_settings = join(self.mod_folder, "userconfig", "cba_settings.sqf")
+        assert islink(cba_settings)
+        with open(cba_settings, "r") as f:
+            assert f.read() == "test"

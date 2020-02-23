@@ -1,7 +1,7 @@
 import shutil
 from os import mkdir, listdir
 from os.path import isdir, islink, join, splitdrive, splitext, isfile, abspath
-from typing import List
+from typing import List, Dict
 
 from box import Box
 
@@ -25,6 +25,7 @@ class ServerInstanceSettings(Box):
     user_mods_list: List[str]
     server_mods_list: List[str]
     skip_keys: List[str]
+    mod_fix_settings: Dict[str, str]
     # ARMA settings
     server_title: str
     server_port: str
@@ -43,6 +44,7 @@ class ServerInstanceSettings(Box):
                  server_instance_root=default_arma_path,
                  user_mods_list=None,
                  server_mods_list=None,
+                 mod_fix_settings=None,
                  skip_keys=None,
                  server_title="ODK Training Server",
                  server_port="2202",
@@ -71,6 +73,7 @@ class ServerInstanceSettings(Box):
             server_max_mem=server_max_mem,
             server_flags=server_flags
             )
+        self.mod_fix_settings = Box(mod_fix_settings) if mod_fix_settings is not None else None
 
 
 class ServerInstance:
