@@ -124,7 +124,7 @@ class TestOurTestServerInstance(ODKSMTest):
     def test_should_raise_an_error_with_an_already_existing_server_instance(self, reset_folder_structure):
         """Create instance should raise an error with an already existing server instance."""
         from odk_servermanager.instance import DuplicateServerName
-        with pytest.raises(DuplicateServerName) as err:
+        with pytest.raises(DuplicateServerName):
             self.instance._new_server_folder()
 
     def test_should_symlink_and_create_all_needed_stuff_from_the_main_folder(self, reset_folder_structure):
@@ -141,13 +141,17 @@ class TestOurTestServerInstance(ODKSMTest):
         assert islink(join(server_folder, "testFile3.txt"))
         assert isfile(join(server_folder, "TestFolder1", "testFile1.txt"))
         assert isfile(join(server_folder, "TestFolder2", "testFile2.txt"))
-        # Check folders
-        keys_folder = join(server_folder, "Keys")
+        # Check Mods
         mods_linked_folder = join(server_folder, "!Mods_linked")
         mods_copied_folder = join(server_folder, "!Mods_copied")
-        assert isdir(keys_folder) and not islink(keys_folder)
         assert isdir(mods_copied_folder) and not islink(mods_copied_folder)
         assert isdir(mods_linked_folder) and not islink(mods_linked_folder)
+        # Check keys
+        keys_folder = join(server_folder, "Keys")
+        assert isdir(keys_folder) and not islink(keys_folder)
+        assert isfile(join(keys_folder, "a3.bikey"))
+        assert isfile(join(keys_folder, "a3c.bikey"))
+        assert isfile(join(keys_folder, "gm.bikey"))
 
     def test_should_protect_run_server_bat(self, reset_folder_structure):
         """Our test server instance should protect run_server.bat."""
@@ -200,7 +204,8 @@ class TestOurTestServerInstance(ODKSMTest):
         # end setup, begin actual test
         self.instance._link_keys()
         keys_folder_files = listdir(keys_folder)
-        assert len(keys_folder_files) == len(self.instance.S.user_mods_list) + len(self.instance.S.server_mods_list)
+        assert len(keys_folder_files) == len(self.instance.S.user_mods_list) + len(
+            self.instance.S.server_mods_list) + len(self.instance.arma_keys)
 
     @pytest.mark.runthis
     def test_should_simply_skip_mods_without_keys_when_linking_keys(self, reset_folder_structure):
@@ -274,7 +279,8 @@ class TestServerInstanceInit(ODKSMTest):
         self.init_keys_fun.assert_called()
         keys_folder = join(self.instance._get_server_instance_path(), self.instance.keys_folder_name)
         keys_folder_files = listdir(keys_folder)
-        assert len(keys_folder_files) == len(self.instance.S.user_mods_list) + len(self.instance.S.server_mods_list)
+        assert len(keys_folder_files) == len(self.instance.S.user_mods_list) + len(
+            self.instance.S.server_mods_list) + len(self.instance.arma_keys)
 
     def test_should_generate_the_bat_file(self):
         """Server instance init should generate the bat file."""

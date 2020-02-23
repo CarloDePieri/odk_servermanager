@@ -77,6 +77,7 @@ class ServerInstance:
     """TODO"""
 
     keys_folder_name = "Keys"
+    arma_keys = ["a3.bikey", "a3c.bikey", "gm.bikey"]
 
     def __init__(self, settings: ServerInstanceSettings):
         self.S = settings
@@ -113,6 +114,11 @@ class ServerInstance:
         for folder in to_be_created:
             folder = join(server_folder, folder)
             mkdir(folder)
+        # Copy the arma keyfiles
+        for key in self.arma_keys:
+            arma_key_folder = join(self.S.arma_folder, self.keys_folder_name)
+            instance_key_folder = join(server_folder, self.keys_folder_name)
+            symlink(join(arma_key_folder, key), join(instance_key_folder, key))
 
     def _init_mods(self, mods_list: List[str]) -> None:
         """This will link mods to an instance, copying or symlinking them."""
