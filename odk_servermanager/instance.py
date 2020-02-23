@@ -81,6 +81,8 @@ class ServerInstance:
 
     def __init__(self, settings: ServerInstanceSettings):
         self.S = settings
+        from odk_servermanager.modfix import registered_fix
+        self.registered_fix = registered_fix
 
     def _get_server_instance_path(self) -> str:
         """Return the server instance path."""
@@ -128,12 +130,24 @@ class ServerInstance:
             for mod in mods_list:
                 mod_folder = "@" + mod
                 if mod in self.S.mods_to_be_copied:
-                    fun = shutil.copytree  # this will actually copy the mod
-                    target_folder = join(server_folder, self.S.copied_mod_folder_name)
+                    # Check if mod fixes are registered for this mod
+                    mod_fix = list(filter(lambda x: x.name == mod, self.registered_fix))
+                    mod_fix = mod_fix[0] if len(mod_fix) > 0 else None
+                    # If available, call its pre hook
+                    if mod_fix is not None and mod_fix.hook_pre is not None:
+                        mod_fix.hook_pre(self)
+                    # If available, call its replace hook, else simply copy the mod
+                    if mod_fix is not None and mod_fix.hook_replace is not None:
+                        mod_fix.hook_replace(self)
+                    else:
+                        target_folder = join(server_folder, self.S.copied_mod_folder_name)
+                        shutil.copytree(join(workshop_folder, mod_folder), join(target_folder, mod_folder))
+                    # If available, call its post hook
+                    if mod_fix is not None and mod_fix.hook_post is not None:
+                        mod_fix.hook_post(self)
                 else:
-                    fun = symlink  # this will simply symlink the mod
                     target_folder = join(server_folder, self.S.linked_mod_folder_name)
-                fun(join(workshop_folder, mod_folder), join(target_folder, mod_folder))
+                    symlink(join(workshop_folder, mod_folder), join(target_folder, mod_folder))
             linked_mod_folder = join(server_folder, self.S.linked_mod_folder_name)
             warning_folder_name = "!DO_NOT_CHANGE_FILES_IN_THESE_FOLDERS"
             warning_folder = join(linked_mod_folder, warning_folder_name)

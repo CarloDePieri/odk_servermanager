@@ -207,7 +207,6 @@ class TestOurTestServerInstance(ODKSMTest):
         assert len(keys_folder_files) == len(self.instance.S.user_mods_list) + len(
             self.instance.S.server_mods_list) + len(self.instance.arma_keys)
 
-    @pytest.mark.runthis
     def test_should_simply_skip_mods_without_keys_when_linking_keys(self, reset_folder_structure):
         """Our test server instance should simply skip mods without keys when linking keys."""
         copied_mods = join(self.instance._get_server_instance_path(), "!Mods_copied")
