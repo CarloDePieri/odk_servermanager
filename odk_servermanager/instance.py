@@ -230,8 +230,18 @@ class ServerInstance:
         self._link_keys_in_folder(join(root, self.S.copied_mod_folder_name))
         self._link_keys_in_folder(join(root, self.S.linked_mod_folder_name))
 
+    def _check_mods_folders(self) -> None:
+        """Check that every specified mod is present in the main !Workshop dir."""
+        mods_folders_name = listdir(join(self.S.arma_folder, "!Workshop"))
+        mods = self.S.user_mods_list + self.S.server_mods_list + self.S.mods_to_be_copied
+        for mod in mods:
+            if "@" + mod not in mods_folders_name:
+                raise ModNotFound("Could not find a mod named {}".format(mod))
+
     def init(self):
         """Create the new instance folder, filled with everything needed to start it."""
+        # check mods folder
+        self._check_mods_folders()
         # create the folder
         self._new_server_folder()
         # prepare all arma files and folder
@@ -246,4 +256,8 @@ class ServerInstance:
 
 
 class DuplicateServerName(Exception):
+    """"""
+
+
+class ModNotFound(Exception):
     """"""

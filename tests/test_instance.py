@@ -285,3 +285,35 @@ class TestServerInstanceInit(ODKSMTest):
         """Server instance init should generate the bat file."""
         self.compiled_bat_fun.assert_called()
         assert isfile(join(self.instance_folder, "run_server.bat"))
+
+
+@pytest.mark.runthis
+class TestAnInstanceWithANonExistingMod(ODKSMTest):
+    """Test: An instance with a non existing mod..."""
+
+    @pytest.fixture(scope="class", autouse=True)
+    def setup(self, request, class_reset_folder_structure):
+        """TestAnInstanceWithANonExistingMod setup"""
+        server_name = "TestServer1"
+        request.cls.test_path = test_folder_structure_path()
+        request.cls.settings = ServerInstanceSettings(
+            server_name,
+            user_mods_list=["NOT_THERE"],
+            arma_folder=self.test_path,
+            server_instance_root=self.test_path,
+        )
+        request.cls.instance = ServerInstance(self.settings)
+
+    def test_should_raise_an_error(self, reset_folder_structure):
+        """An instance with a non existing mod should raise an error."""
+        from odk_servermanager.instance import ModNotFound
+        with pytest.raises(ModNotFound):
+            self.instance._check_mods_folders()
+
+    def test_should_check_for_it_and_stop_before_changin_anything(self, reset_folder_structure):
+        """An instance with a non existing mod should check for it and stop before changin anything."""
+        from odk_servermanager.instance import ModNotFound
+        with pytest.raises(ModNotFound), spy(self.instance._check_mods_folders) as check_fun:
+            self.instance.init()
+            check_fun.assert_called()
+        assert not isdir(self.instance._get_server_instance_path())
