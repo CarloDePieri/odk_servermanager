@@ -1,4 +1,5 @@
 from os.path import isdir
+from typing import Dict
 
 
 def symlink(source: str, link_name: str) -> None:
@@ -15,3 +16,13 @@ def symlink(source: str, link_name: str) -> None:
         flags = 1 if isdir(source) else 0
         if csl(link_name, source, flags) == 0:
             raise ctypes.WinError()
+
+
+def compile_from_template(template_file: str, compiled_file: str, settings: Dict) -> None:
+    """Read a template file and compiled it with the provided settings"""
+    from jinja2 import Template
+    with open(template_file, "r") as f:
+        template = Template(f.read())
+    compiled = template.render(settings)
+    with open(compiled_file, "w+") as f:
+        f.write(compiled)
