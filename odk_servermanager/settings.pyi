@@ -10,12 +10,10 @@ class ServerConfigSettings:
 
 class ServerBatSettings:
     server_title: str
-    server_root: str
     server_port: str
     server_config: str
     server_cfg: str
     server_max_mem: str
-    server_drive: str
     server_flags: str
 
 
@@ -25,6 +23,7 @@ class ServerInstanceSettings:
     config_settings: ServerConfigSettings
     arma_folder: str
     server_instance_root: str
+    server_drive: str
     server_instance_prefix: str
     linked_mod_folder_name: str
     copied_mod_folder_name: str

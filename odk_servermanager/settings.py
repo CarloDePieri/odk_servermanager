@@ -28,7 +28,6 @@ class ServerBatSettings(Box):
     REQUIRED FIELDS
     ---------------
     :server_title: The server instance name that will appear in the monitoring tool
-    :server_root: The complete path to the server instance root
     :server_port: The port the server is running on
     :server_config: The path to the config file
     :server_cfg: The path to the cfg file
@@ -39,12 +38,11 @@ class ServerBatSettings(Box):
     :server_flags: Default to empty, any addition flag to be passed to the server
     """
 
-    def __init__(self, server_title: str, server_root: str, server_port: str, server_config: str, server_cfg: str,
+    def __init__(self, server_title: str, server_port: str, server_config: str, server_cfg: str,
                  server_max_mem: str, server_flags: str = "", **kwargs):
-        server_drive = splitdrive(server_root)[0]
-        super(Box, self).__init__(server_title=server_title, server_root=server_root, server_port=server_port,
+        super(Box, self).__init__(server_title=server_title, server_port=server_port,
                                   server_config=server_config, server_cfg=server_cfg, server_max_mem=server_max_mem,
-                                  server_flags=server_flags, server_drive=server_drive, **kwargs)
+                                  server_flags=server_flags, **kwargs)
 
 
 class ServerInstanceSettings(Box):
@@ -81,6 +79,7 @@ class ServerInstanceSettings(Box):
             arma_folder = os.path.join(os.getenv("ProgramFiles"), r"Steam\steamapps\common\Arma 3")
         if server_instance_root == "":
             server_instance_root = arma_folder
+        server_drive = splitdrive(server_instance_root)[0]
         super(Box, self).__init__(server_instance_name=server_instance_name, arma_folder=arma_folder,
                                   bat_settings=bat_settings, config_settings=config_settings,
                                   mods_to_be_copied=mods_to_be_copied, linked_mod_folder_name=linked_mod_folder_name,
@@ -89,4 +88,5 @@ class ServerInstanceSettings(Box):
                                   server_instance_root=server_instance_root,
                                   user_mods_list=user_mods_list, server_mods_list=server_mods_list,
                                   skip_keys=skip_keys + ["!DO_NOT_CHANGE_FILES_IN_THESE_FOLDERS"],
+                                  server_drive=server_drive,
                                   mod_fix_settings=mod_fix_settings)
