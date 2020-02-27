@@ -1,6 +1,6 @@
 import pytest
 
-from odk_servermanager.settings import ServerConfigSettings, ServerBatSettings
+from odk_servermanager.settings import ServerConfigSettings, ServerBatSettings, ServerInstanceSettings
 
 
 class TestAServerConfigSettings:
@@ -31,7 +31,6 @@ class TestAServerConfigSettings:
         assert sc.myconfig == myconfig
 
 
-@pytest.mark.runthis
 class TestAServerBatSettings:
     """Test: A Server Bat Settings..."""
 
@@ -65,3 +64,71 @@ class TestAServerBatSettings:
         assert sb.custom_field == "custom"
 
 
+class TestAServerInstanceSettings:
+    """Test: A Server Instance Settings..."""
+
+    @pytest.fixture(scope="class", autouse=True)
+    def setup(self, request):
+        """TestAServerInstanceSettings setup"""
+        request.cls.sb = ServerBatSettings("title", "c:", "2000", r"c:\server.config", r"c:\server.cfg", "128")
+        request.cls.sc = ServerConfigSettings("title", "123", "456", "missionName")
+
+    def test_should_have_some_required_arguments(self, assert_requires_arguments):
+        """A server instance settings should have some required arguments."""
+        assert_requires_arguments(ServerInstanceSettings, ["server_instance_name", "bat_settings", "config_settings"])
+
+    def test_should_have_decent_defaults(self):
+        """A server instance settings should have decent defaults."""
+        server_instance_name = "training"
+        si = ServerInstanceSettings(server_instance_name=server_instance_name,
+                                    bat_settings=self.sb, config_settings=self.sc)
+        assert si.arma_folder == r"C:\Program Files\Steam\steamapps\common\Arma 3"
+        assert si.mods_to_be_copied == []
+        assert si.linked_mod_folder_name == "!Mods_linked"
+        assert si.copied_mod_folder_name == "!Mods_copied"
+        assert si.server_instance_prefix == "__server__"
+        assert si.server_instance_root == si.arma_folder
+        assert si.user_mods_list == []
+        assert si.server_mods_list == []
+        assert si.skip_keys == ["!DO_NOT_CHANGE_FILES_IN_THESE_FOLDERS"]
+        assert si.mod_fix_settings == []
+
+    def test_should_set_its_fields(self):
+        """A server instance settings should set its fields."""
+        server_instance_name = "training"
+        arma_folder = r"c:\new path"
+        mods_to_be_copied = ["CBA_A3"]
+        linked_mod_folder_name = "!M_linked",
+        copied_mod_folder_name = "!M_copied",
+        server_instance_prefix = "__instance__"
+        server_instance_root = r"c:\instance-path"
+        server_mods_list = ["ODKMIN"]
+        user_mods_list = ["ace", "CBA_A3"]
+        skip_keys = ["CBA_A3"]
+        mod_fix_settings = ["CBA_A3"]
+        si = ServerInstanceSettings(server_instance_name=server_instance_name,
+                                    bat_settings=self.sb, config_settings=self.sc,
+                                    arma_folder=arma_folder,
+                                    mods_to_be_copied=mods_to_be_copied, linked_mod_folder_name=linked_mod_folder_name,
+                                    copied_mod_folder_name=copied_mod_folder_name,
+                                    server_instance_prefix=server_instance_prefix,
+                                    server_instance_root=server_instance_root,
+                                    user_mods_list=user_mods_list, server_mods_list=server_mods_list,
+                                    skip_keys=skip_keys, mod_fix_settings=mod_fix_settings)
+        assert si.server_instance_name == server_instance_name
+        assert si.arma_folder == arma_folder
+        assert si.mods_to_be_copied == mods_to_be_copied
+        assert si.linked_mod_folder_name == linked_mod_folder_name
+        assert si.copied_mod_folder_name == copied_mod_folder_name
+        assert si.server_instance_prefix == server_instance_prefix
+        assert si.server_instance_root == server_instance_root
+        assert si.user_mods_list == user_mods_list
+        assert si.server_mods_list == server_mods_list
+        assert si.skip_keys == skip_keys + ["!DO_NOT_CHANGE_FILES_IN_THESE_FOLDERS"]
+        assert si.mod_fix_settings == mod_fix_settings
+
+    def test_should_accept_other_settings_container(self):
+        """A server instance settings should accept other settings container."""
+        si = ServerInstanceSettings("testing", bat_settings=self.sb, config_settings=self.sc)
+        assert si.bat_settings == self.sb
+        assert si.config_settings == self.sc

@@ -1,4 +1,6 @@
+import os
 from os.path import splitdrive
+from typing import List, Dict
 
 from box import Box
 
@@ -45,3 +47,46 @@ class ServerBatSettings(Box):
                                   server_flags=server_flags, server_drive=server_drive, **kwargs)
 
 
+class ServerInstanceSettings(Box):
+    """Config container for the ODKSM module.
+
+    REQUIRED FIELDS
+    ---------------
+    :server_instance_name: The name that will appear in the instance folder name
+    :bat_settings: The settings needed to generate the bat file
+    :config_settings: The settings needed to generate the config file
+
+    OPTIONAL FIELDS
+    ---------------
+    :arma_folder: The folder that contains the game, default to the steam default folder
+    :mods_to_be_copied: mods from this list will be copied, not linked
+    :linked_mod_folder_name: the name of the linked mod folder
+    :copied_mod_folder_name: the name of the copied mod folder
+    :server_instance_prefix: every instance folder name will be prefixed by this
+    :server_instance_root: every instance folder will be put in this root folder, default to :arma_folder:
+    :user_mods_list: the list of the user mods
+    :server_mods_list: the list of the server mods
+    :skip_keys: which key will be skipped and not linked to the main Keys folder
+    :mod_fix_settings: settings used by the mod fixes
+    """
+
+    def __init__(self, server_instance_name: str,
+                 bat_settings: ServerBatSettings, config_settings: ServerConfigSettings,
+                 arma_folder: str = "", mods_to_be_copied: List[str] = [],
+                 linked_mod_folder_name: str = "!Mods_linked", copied_mod_folder_name: str = "!Mods_copied",
+                 server_instance_prefix: str = "__server__", server_instance_root: str = "",
+                 user_mods_list: List[str] = [], server_mods_list: List[str] = [], skip_keys: List[str] = [],
+                 mod_fix_settings: Dict[str, str] = []):
+        if arma_folder == "":
+            arma_folder = os.path.join(os.getenv("ProgramFiles"), r"Steam\steamapps\common\Arma 3")
+        if server_instance_root == "":
+            server_instance_root = arma_folder
+        super(Box, self).__init__(server_instance_name=server_instance_name, arma_folder=arma_folder,
+                                  bat_settings=bat_settings, config_settings=config_settings,
+                                  mods_to_be_copied=mods_to_be_copied, linked_mod_folder_name=linked_mod_folder_name,
+                                  copied_mod_folder_name=copied_mod_folder_name,
+                                  server_instance_prefix=server_instance_prefix,
+                                  server_instance_root=server_instance_root,
+                                  user_mods_list=user_mods_list, server_mods_list=server_mods_list,
+                                  skip_keys=skip_keys + ["!DO_NOT_CHANGE_FILES_IN_THESE_FOLDERS"],
+                                  mod_fix_settings=mod_fix_settings)
