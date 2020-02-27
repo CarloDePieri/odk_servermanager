@@ -2,7 +2,7 @@ import os
 import pytest
 import shutil
 import zipfile
-from typing import Callable
+from typing import Callable, List
 from unittest.mock import patch
 
 test_resources = "tests/resources/"
@@ -50,3 +50,14 @@ def observe_function(mocker):
 def spy(method: Callable):
     # noinspection PyUnresolvedReferences
     return patch.object(method.__self__, method.__name__, wraps=method)
+
+
+@pytest.fixture()
+def assert_requires_arguments():
+    """Helper fixture for asserting function argument requirements"""
+    def _wrapper(function: Callable, arguments: List[str]):
+        with pytest.raises(TypeError) as err:
+            function()
+        for arg in arguments:
+            assert err.value.args[0].find(arg) > 0
+    return _wrapper
