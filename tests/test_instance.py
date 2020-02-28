@@ -2,7 +2,7 @@ from os.path import isdir, isfile, islink, join, splitdrive
 from os import listdir, mkdir
 import pytest
 
-from conftest import test_folder_structure_path, spy
+from conftest import test_folder_structure_path, spy, touch
 from odksm_test import ODKSMTest
 from odk_servermanager.instance import ServerInstance
 from odk_servermanager.settings import ServerInstanceSettings, ServerBatSettings, ServerConfigSettings
@@ -264,6 +264,59 @@ class TestOurTestServerInstance(ODKSMTest):
         mkdir(copied_mods)
         self.instance._copy_mod("ace")
         assert isdir(join(copied_mods, "@ace"))
+
+    def test_should_be_able_to_clean_linked_mods(self, reset_folder_structure):
+        """Our test server instance should be able to clean linked mods."""
+        linked_mods = join(self.instance.get_server_instance_path(), self.instance.S.linked_mod_folder_name)
+        mkdir(linked_mods)
+        self.instance._init_mods(["ace"])
+        assert islink(join(linked_mods, "@ace"))
+        self.instance._clear_linked_mods()
+        assert not islink(join(linked_mods, "@ace"))
+
+    def test_should_be_able_to_clean_a_copied_mod_folder(self, reset_folder_structure):
+        """Our test server instance should be able to clean a copied mod folder."""
+        copied_mods = join(self.instance.get_server_instance_path(), self.instance.S.copied_mod_folder_name)
+        mkdir(copied_mods)
+        self.instance._copy_mod("CBA_A3")
+        assert isdir(join(copied_mods, "@CBA_A3"))
+        self.instance._clear_copied_mod("CBA_A3")
+        assert not isdir(join(copied_mods, "@CBA_A3"))
+
+    def test_should_be_able_to_clean_old_and_useless_copied_mod_folder(self, reset_folder_structure):
+        """Our test server instance should be able to clean old and useless copied mod folder."""
+        copied_mods = join(self.instance.get_server_instance_path(), self.instance.S.copied_mod_folder_name)
+        mkdir(copied_mods)
+        self.instance.S.mods_to_be_copied = ["ace"]
+        self.instance._copy_mod("CBA_A3")
+        self.instance._copy_mod("ace")
+        assert isdir(join(copied_mods, "@CBA_A3"))
+        assert isdir(join(copied_mods, "@ace"))
+        self.instance._clear_old_copied_mods()
+        assert not isdir(join(copied_mods, "@CBA_A3"))
+        assert isdir(join(copied_mods, "@ace"))
+
+    @pytest.mark.runthis
+    def test_should_be_able_to_update_its_mods(self, reset_folder_structure):
+        """Our test server instance should be able to update its mods."""
+        copied_mods_folder = join(self.instance.get_server_instance_path(), self.instance.S.copied_mod_folder_name)
+        linked_mods_folder = join(self.instance.get_server_instance_path(), self.instance.S.linked_mod_folder_name)
+        mkdir(linked_mods_folder)
+        mkdir(copied_mods_folder)
+        self.instance.S.user_mods_list = ["ace", "AdvProp", "ODKAI"]
+        self.instance.S.mods_to_be_copied = ["ace", "AdvProp"]
+        self.instance._init_mods(self.instance.S.user_mods_list)
+        touch(join(copied_mods_folder, "@ace", "config"))
+        self.instance.S.user_mods_list = ["ace", "ODKAI", "ODKMIN"]
+        self.instance.S.mods_to_be_copied = ["ace", "ODKAI"]
+        # end setup
+        self.instance._update_all_mods()
+        assert isdir(join(copied_mods_folder, "@ace"))  # was present, is still present, so the folder gets copied over
+        assert not isfile(join(copied_mods_folder, "@ace", "config"))  # old customizations get overwritten
+        assert not isdir(join(copied_mods_folder, "@AdvProp"))  # no more needed folder gets discarded
+        assert isdir(join(copied_mods_folder, "@ODKAI"))  # newly added mod folder gets added
+        assert not islink(join(linked_mods_folder, "@ODKAI"))  # no more linked
+        assert islink(join(linked_mods_folder, "@ODKMIN"))
 
 
 class TestServerInstanceInit(ODKSMTest):

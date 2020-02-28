@@ -3,7 +3,7 @@ from typing import Callable, List
 
 import pytest
 
-from conftest import test_folder_structure_path
+from conftest import test_folder_structure_path, touch
 from odksm_test import ODKSMTest
 from odk_servermanager.modfix import ModFix
 from odk_servermanager.settings import ServerInstanceSettings
@@ -35,7 +35,6 @@ class TestAModFix(ODKSMTest):
         assert isinstance(registered_fix, List)
 
 
-@pytest.mark.runthis
 class TestAServerInstance(ODKSMTest):
     """Test: A Server Instance ..."""
 
@@ -103,8 +102,7 @@ class TestModFixCba(ODKSMTest):
         """TestModFixCba setup"""
         request.cls.test_path = test_folder_structure_path()
         custom_cba = join(self.test_path, "cba_settings.sqf")
-        with open(custom_cba, "w+") as f:
-            f.write("test")
+        touch(custom_cba, "test")
         settings = ServerInstanceSettings("test", c_sb_stub, c_sc_stub, user_mods_list=["CBA_A3"],
                                           mods_to_be_copied=["CBA_A3"], arma_folder=self.test_path,
                                           server_instance_root=self.test_path,

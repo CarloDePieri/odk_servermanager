@@ -1,5 +1,5 @@
 import shutil
-from os import mkdir, listdir
+from os import mkdir, listdir, unlink
 from os.path import isdir, islink, join, splitext, isfile, abspath
 from typing import List
 
@@ -207,6 +207,49 @@ class ServerInstance:
         self._compile_bat_file()
         # compile the config file
         self._compile_config_file()
+
+    def _clear_linked_mods(self) -> None:
+        """Clear the linked mods folder."""
+        linked_mods_folder = join(self.get_server_instance_path(), self.S.linked_mod_folder_name)
+        for mod in listdir(linked_mods_folder):
+            if mod.startswith("@"):
+                unlink(join(linked_mods_folder, mod))
+
+    def _clear_copied_mod(self, mod_name: str) -> None:
+        """Clear the copied mod folder."""
+        copied_mods_folder = join(self.get_server_instance_path(), self.S.copied_mod_folder_name)
+        shutil.rmtree(join(copied_mods_folder, "@" + mod_name))
+
+    def _clear_old_copied_mods(self) -> None:
+        """Delete all copied mods that are no longer in the mods_to_be_copied"""
+        copied_mods_folder = join(self.get_server_instance_path(), self.S.copied_mod_folder_name)
+        for mod in listdir(copied_mods_folder):
+            if mod[1:] not in self.S.mods_to_be_copied:
+                shutil.rmtree(join(copied_mods_folder, mod))
+
+    def _update_copied_mod(self, mod_name: str) -> None:
+        """Update a to be copied mod, calling the ModFix hooks if a ModFix is present."""
+        copied_mods_folder = join(self.get_server_instance_path(), self.S.copied_mod_folder_name)
+        already_there_mods = map(lambda x: x[1:], listdir(copied_mods_folder))
+        if mod_name in already_there_mods:
+            self._clear_copied_mod(mod_name)
+        self._copy_mod(mod_name)
+
+    def _update_mods(self, mods: List[str]) -> None:
+        """Update (symlinking or copying) all mods from a list."""
+        for mod in mods:
+            if mod in self.S.mods_to_be_copied:
+                self._update_copied_mod(mod)
+            else:
+                self._symlink_mod(mod)
+
+    def _update_all_mods(self) -> None:
+        """Update both user and server mods and perform some cleanup tasks."""
+        self._clear_linked_mods()
+        self._clear_old_copied_mods()
+        self._update_mods(self.S.user_mods_list)
+        self._update_mods(self.S.server_mods_list)
+        self._symlink_warning_folder()
 
 
 class DuplicateServerName(Exception):

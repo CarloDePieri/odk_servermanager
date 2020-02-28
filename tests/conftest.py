@@ -54,6 +54,12 @@ def spy(method: Callable):
     return patch.object(method.__self__, method.__name__, wraps=method)
 
 
+def touch(file_name: str, content: str = "") -> None:
+    """Helper function to quickly write into a file"""
+    with open(file_name, "w+") as f:
+        f.write(content)
+
+
 @pytest.fixture()
 def assert_requires_arguments():
     """Helper fixture for asserting function argument requirements"""
