@@ -59,37 +59,54 @@ class ServerInstance:
             instance_key_folder = join(server_folder, self.keys_folder_name)
             symlink(join(arma_key_folder, key), join(instance_key_folder, key))
 
+    def _symlink_mod(self, mod_name) -> None:
+        """Symlink a single mod in the linked mod folder."""
+        server_folder = self.get_server_instance_path()
+        workshop_folder = join(self.S.arma_folder, "!Workshop")
+        mod_folder = "@" + mod_name
+        target_folder = join(server_folder, self.S.linked_mod_folder_name)
+        symlink(join(workshop_folder, mod_folder), join(target_folder, mod_folder))
+
+    def _symlink_warning_folder(self) -> None:
+        """Symlink the warning folder inside the linked mod folder if needed."""
+        server_folder = self.get_server_instance_path()
+        workshop_folder = join(self.S.arma_folder, "!Workshop")
+        linked_mod_folder = join(server_folder, self.S.linked_mod_folder_name)
+        warning_folder_name = "!DO_NOT_CHANGE_FILES_IN_THESE_FOLDERS"
+        warning_folder = join(linked_mod_folder, warning_folder_name)
+        if not islink(warning_folder):
+            symlink(join(workshop_folder, warning_folder_name), warning_folder)
+
+    def _copy_mod(self, mod_name):
+        """Copy the given mod, taking care of calling the ModFix hook if a ModFix is registered."""
+        server_folder = self.get_server_instance_path()
+        workshop_folder = join(self.S.arma_folder, "!Workshop")
+        mod_folder = "@" + mod_name
+        # Check if mod fixes are registered for this mod
+        mod_fix = list(filter(lambda x: x.name == mod_name, self.registered_fix))
+        mod_fix = mod_fix[0] if len(mod_fix) > 0 else None
+        # If available, call its pre hook
+        if mod_fix is not None and mod_fix.hook_pre is not None:
+            mod_fix.hook_pre(self)
+        # If available, call its replace hook, else simply copy the mod
+        if mod_fix is not None and mod_fix.hook_replace is not None:
+            mod_fix.hook_replace(self)
+        else:
+            target_folder = join(server_folder, self.S.copied_mod_folder_name)
+            shutil.copytree(join(workshop_folder, mod_folder), join(target_folder, mod_folder))
+        # If available, call its post hook
+        if mod_fix is not None and mod_fix.hook_post is not None:
+            mod_fix.hook_post(self)
+
     def _init_mods(self, mods_list: List[str]) -> None:
         """This will link mods to an instance, copying or symlinking them."""
         if len(mods_list) > 0:
-            server_folder = self.get_server_instance_path()
-            workshop_folder = join(self.S.arma_folder, "!Workshop")
             for mod in mods_list:
-                mod_folder = "@" + mod
                 if mod in self.S.mods_to_be_copied:
-                    # Check if mod fixes are registered for this mod
-                    mod_fix = list(filter(lambda x: x.name == mod, self.registered_fix))
-                    mod_fix = mod_fix[0] if len(mod_fix) > 0 else None
-                    # If available, call its pre hook
-                    if mod_fix is not None and mod_fix.hook_pre is not None:
-                        mod_fix.hook_pre(self)
-                    # If available, call its replace hook, else simply copy the mod
-                    if mod_fix is not None and mod_fix.hook_replace is not None:
-                        mod_fix.hook_replace(self)
-                    else:
-                        target_folder = join(server_folder, self.S.copied_mod_folder_name)
-                        shutil.copytree(join(workshop_folder, mod_folder), join(target_folder, mod_folder))
-                    # If available, call its post hook
-                    if mod_fix is not None and mod_fix.hook_post is not None:
-                        mod_fix.hook_post(self)
+                    self._copy_mod(mod)
                 else:
-                    target_folder = join(server_folder, self.S.linked_mod_folder_name)
-                    symlink(join(workshop_folder, mod_folder), join(target_folder, mod_folder))
-            linked_mod_folder = join(server_folder, self.S.linked_mod_folder_name)
-            warning_folder_name = "!DO_NOT_CHANGE_FILES_IN_THESE_FOLDERS"
-            warning_folder = join(linked_mod_folder, warning_folder_name)
-            if not islink(warning_folder):
-                symlink(join(workshop_folder, warning_folder_name), warning_folder)
+                    self._symlink_mod(mod)
+            self._symlink_warning_folder()
 
     def _compose_relative_path_linked_mods(self, mod_name: str) -> str:
         """Helper used in bat compilation. Generate a linked mod paths."""

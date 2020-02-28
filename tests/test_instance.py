@@ -242,8 +242,30 @@ class TestOurTestServerInstance(ODKSMTest):
         self.instance._link_keys()
         assert len(listdir(keys_folder)) == 0
 
+    def test_should_be_able_to_link_a_mod(self, reset_folder_structure):
+        """Our test server instance should be able to link a mod."""
+        self.instance.S.user_mods_list = ["ace"]
+        linked_mods = join(self.instance.get_server_instance_path(), self.instance.S.linked_mod_folder_name)
+        mkdir(linked_mods)
+        self.instance._symlink_mod("ace")
+        assert islink(join(linked_mods, "@ace"))
 
-@pytest.mark.runthis
+    def test_should_be_able_to_link_the_warning_folder(self, reset_folder_structure):
+        """Our test server instance should be able to link the warning folder."""
+        linked_mods = join(self.instance.get_server_instance_path(), self.instance.S.linked_mod_folder_name)
+        mkdir(linked_mods)
+        warning_folder_name = "!DO_NOT_CHANGE_FILES_IN_THESE_FOLDERS"
+        self.instance._symlink_warning_folder()
+        assert islink(join(linked_mods, warning_folder_name))
+
+    def test_should_be_able_to_copy_a_mod(self, reset_folder_structure):
+        """Our test server instance should be able to copy a mod."""
+        copied_mods = join(self.instance.get_server_instance_path(), self.instance.S.copied_mod_folder_name)
+        mkdir(copied_mods)
+        self.instance._copy_mod("ace")
+        assert isdir(join(copied_mods, "@ace"))
+
+
 class TestServerInstanceInit(ODKSMTest):
     """Test: ServerInstance init..."""
 

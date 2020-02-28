@@ -35,6 +35,7 @@ class TestAModFix(ODKSMTest):
         assert isinstance(registered_fix, List)
 
 
+@pytest.mark.runthis
 class TestAServerInstance(ODKSMTest):
     """Test: A Server Instance ..."""
 
@@ -64,7 +65,7 @@ class TestAServerInstance(ODKSMTest):
         mf = ModFixTest()
         hook = mocker.patch.object(mf, "hook_pre", side_effect=mf.hook_pre)
         self.instance.registered_fix = [mf]
-        self.instance._init_mods(["ace"])
+        self.instance._copy_mod("ace")
         hook.assert_called_with(self.instance)
         assert isdir(join(self.instance.get_server_instance_path(), self.instance.S.copied_mod_folder_name, "@ace"))
 
@@ -76,7 +77,7 @@ class TestAServerInstance(ODKSMTest):
         mf = ModFixTest()
         hook = mocker.patch.object(mf, "hook_post", side_effect=mf.hook_post)
         self.instance.registered_fix = [mf]
-        self.instance._init_mods(["ace"])
+        self.instance._copy_mod("ace")
         hook.assert_called_with(self.instance)
         assert isdir(join(self.instance.get_server_instance_path(), self.instance.S.copied_mod_folder_name, "@ace"))
 
@@ -88,7 +89,7 @@ class TestAServerInstance(ODKSMTest):
         mf = ModFixTest()
         hook = mocker.patch.object(mf, "hook_replace", side_effect=mf.hook_replace)
         self.instance.registered_fix = [mf]
-        self.instance._init_mods(["ace"])
+        self.instance._copy_mod("ace")
         hook.assert_called_with(self.instance)
         assert not isdir(join(self.instance.get_server_instance_path(),
                               self.instance.S.copied_mod_folder_name, "@ace"))
@@ -111,7 +112,7 @@ class TestModFixCba(ODKSMTest):
         request.cls.instance = ServerInstance(settings)
         self.instance._new_server_folder()
         self.instance._prepare_server_core()
-        self.instance._init_mods(["CBA_A3"])
+        self.instance._copy_mod("CBA_A3")
         request.cls.mod_folder = join(self.instance.get_server_instance_path(),
                                       self.instance.S.copied_mod_folder_name, "@CBA_A3")
 
