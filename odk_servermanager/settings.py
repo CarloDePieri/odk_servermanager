@@ -16,9 +16,9 @@ class ServerConfigSettings(Box):
     :password_admin: The password admin uses to manage the server
     :template: Filename of pbo in MPMissions folder"""
 
-    def __init__(self, hostname: str, password: str, password_admin: str, template: str, **kwargs):
+    def __init__(self, hostname: str, password: str, password_admin: str, mission_template: str, **kwargs):
         super(Box, self).__init__(hostname=hostname, password=password, password_admin=password_admin,
-                                  template=template, **kwargs)
+                                  mission_template=mission_template, **kwargs)
 
 
 class ServerBatSettings(Box):

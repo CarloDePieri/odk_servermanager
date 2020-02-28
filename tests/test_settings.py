@@ -8,7 +8,7 @@ class TestAServerConfigSettings:
 
     def test_should_require_certain_fields(self, assert_requires_arguments):
         """A server config settings should require certain fields."""
-        assert_requires_arguments(ServerConfigSettings, ['hostname', 'password', 'password_admin', 'template'])
+        assert_requires_arguments(ServerConfigSettings, ['hostname', 'password', 'password_admin', 'mission_template'])
 
     def test_should_accept_additional_field(self):
         """A server config settings should accept additional field."""
@@ -21,13 +21,13 @@ class TestAServerConfigSettings:
             hostname=hostname,
             password=password,
             password_admin=password_admin,
-            template=template,
+            mission_template=template,
             myconfig=myconfig
         )
         assert sc.hostname == hostname
         assert sc.password == password
         assert sc.password_admin == password_admin
-        assert sc.template == template
+        assert sc.mission_template == template
         assert sc.myconfig == myconfig
 
 
