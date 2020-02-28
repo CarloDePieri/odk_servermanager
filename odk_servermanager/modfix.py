@@ -1,9 +1,8 @@
-import shutil
 from os import mkdir, listdir
 from os.path import join
 from typing import Callable, List, Union
 from odk_servermanager.instance import ServerInstance
-from odk_servermanager.utils import symlink
+from odk_servermanager.utils import symlink, copy
 
 
 class ModFix:
@@ -57,11 +56,11 @@ class ModFixCBA(ModFix):
         if mod_fix_settings is not None and mod_fix_settings.get("cba_settings", None) is not None:
             src = mod_fix_settings["cba_settings"]
             dest = join(mod_folder, "userconfig", "cba_settings.sqf")
-            shutil.copy2(src, dest)
+            copy(src, dest)
         else:
             src = join(arma_mod_folder, "userconfig", "cba_settings.sqf")
             dest = join(mod_folder, "userconfig", "cba_settings.sqf")
-            shutil.copy2(src, dest)
+            copy(src, dest)
 
     def hook_update_replace(self, server_instance: ServerInstance) -> None:
         """This empty hook will prevent the update of an already there cba instance.

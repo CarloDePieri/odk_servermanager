@@ -1,4 +1,3 @@
-import shutil
 from os import mkdir, listdir, unlink, remove
 from os.path import isdir, islink, join, splitext, isfile, abspath
 from typing import List
@@ -6,7 +5,7 @@ from typing import List
 import pkg_resources
 
 from odk_servermanager.settings import ServerInstanceSettings
-from odk_servermanager.utils import symlink, compile_from_template
+from odk_servermanager.utils import symlink, compile_from_template, copytree, rmtree
 
 
 class ServerInstance:
@@ -93,7 +92,7 @@ class ServerInstance:
             mod_fix.hook_replace(self)
         else:
             target_folder = join(server_folder, self.S.copied_mod_folder_name)
-            shutil.copytree(join(workshop_folder, mod_folder), join(target_folder, mod_folder))
+            copytree(join(workshop_folder, mod_folder), join(target_folder, mod_folder))
         # If available, call its post hook
         if mod_fix is not None and mod_fix.hook_post is not None:
             mod_fix.hook_post(self)
@@ -218,14 +217,14 @@ class ServerInstance:
     def _clear_copied_mod(self, mod_name: str) -> None:
         """Clear the copied mod folder."""
         copied_mods_folder = join(self.get_server_instance_path(), self.S.copied_mod_folder_name)
-        shutil.rmtree(join(copied_mods_folder, "@" + mod_name))
+        rmtree(join(copied_mods_folder, "@" + mod_name))
 
     def _clear_old_copied_mods(self) -> None:
         """Delete all copied mods that are no longer in the mods_to_be_copied"""
         copied_mods_folder = join(self.get_server_instance_path(), self.S.copied_mod_folder_name)
         for mod in listdir(copied_mods_folder):
             if mod[1:] not in self.S.mods_to_be_copied:
-                shutil.rmtree(join(copied_mods_folder, mod))
+                rmtree(join(copied_mods_folder, mod))
 
     def _update_copied_mod(self, mod_name: str) -> None:
         """Update a to be copied mod, calling the ModFix hooks if a ModFix is present."""
