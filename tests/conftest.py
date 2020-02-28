@@ -5,6 +5,8 @@ import zipfile
 from typing import Callable, List
 from unittest.mock import patch
 
+from odk_servermanager.settings import ServerBatSettings, ServerConfigSettings
+
 test_resources = "tests/resources/"
 test_preset_file_name = test_resources + "preset.html"
 test_folder_structure_name = test_resources + "Arma"
@@ -61,3 +63,36 @@ def assert_requires_arguments():
         for arg in arguments:
             assert err.value.args[0].find(arg) > 0
     return _wrapper
+
+
+# Test stubs
+def sb_stub_obj() -> ServerBatSettings:
+    return ServerBatSettings("title", "2000", r"c:\server.config", r"c:\server.cfg", "128")
+
+
+def sc_stub_obj() -> ServerConfigSettings:
+    return ServerConfigSettings("title", "123", "456", "missionName")
+
+
+@pytest.fixture()
+def sb_stub() -> ServerBatSettings:
+    """Return a mock ServerBatInstance object"""
+    return sb_stub_obj()
+
+
+@pytest.fixture()
+def sc_stub() -> ServerConfigSettings:
+    """Return a mock ServerBatInstance object"""
+    return sc_stub_obj()
+
+
+@pytest.fixture(scope="class")
+def c_sb_stub() -> ServerBatSettings:
+    """Return a mock ServerBatInstance object"""
+    return sb_stub_obj()
+
+
+@pytest.fixture(scope="class")
+def c_sc_stub() -> ServerConfigSettings:
+    """Return a mock ServerBatInstance object"""
+    return sc_stub_obj()
