@@ -5,7 +5,7 @@ import pytest
 from conftest import test_folder_structure_path, spy
 from odksm_test import ODKSMTest
 from odk_servermanager.instance import ServerInstance
-from odk_servermanager.settings import ServerInstanceSettings, ServerBatSettings
+from odk_servermanager.settings import ServerInstanceSettings, ServerBatSettings, ServerConfigSettings
 
 
 class TestAServerInstance:
@@ -16,6 +16,47 @@ class TestAServerInstance:
         settings = ServerInstanceSettings("server0", sb_stub, sc_stub)
         instance = ServerInstance(settings)
         assert instance.S == settings
+
+
+class TestWhenConfigComposingTheServerInstance(ODKSMTest):
+    """Test: when config composing the server instance..."""
+
+    @pytest.fixture(scope="class", autouse=True)
+    def setup(self, request, class_reset_folder_structure, c_sb_stub):
+        """TestWhenConfigComposingTheServerInstance setup"""
+        request.cls.test_path = test_folder_structure_path()
+        server_instance_name = "TestServer0"
+        sc = ServerConfigSettings(
+            hostname="TRAINING SERVER",
+            password="123",
+            password_admin="abc",
+            mission_template="mission.name"
+        )
+        request.cls.settings = ServerInstanceSettings(
+            server_instance_name=server_instance_name,
+            bat_settings=c_sb_stub,
+            config_settings=sc,
+            arma_folder=self.test_path,
+            server_instance_root=self.test_path,
+            mods_to_be_copied=["CBA_A3"],
+            user_mods_list=["ace", "CBA_A3", "ODKAI"],
+            server_mods_list=["AdvProp", "ODKMIN"],
+        )
+        request.cls.instance = ServerInstance(self.settings)
+        self.instance._compile_config_file()
+        request.cls.compiled_config = join(self.instance.get_server_instance_path(),
+                                           self.instance.S.bat_settings.server_config)
+
+    def test_should_create_the_file(self):
+        """When config composing the server instance should create the file."""
+        assert isfile(self.compiled_config)
+
+    def test_it_should_correctly_fill_in_settings(self):
+        """When config composing the server instance it should correctly fill in settings."""
+        from conftest import test_resources
+        test_config = join(test_resources, "server.cfg")
+        with open(test_config, "r") as test, open(self.compiled_config, "r") as compiled:
+            assert test.read() == compiled.read()
 
 
 class TestWhenBatComposingTheServerInstance(ODKSMTest):
@@ -50,7 +91,8 @@ class TestWhenBatComposingTheServerInstance(ODKSMTest):
 
     def test_should_correctly_fill_in_settings(self):
         """When bat composing the server instance should correctly fill in settings."""
-        test_bat = join("tests", "resources", "run_server.bat")
+        from conftest import test_resources
+        test_bat = join(test_resources, "run_server.bat")
         with open(test_bat, "r") as test, open(self.compiled_bat, "r") as compiled:
             compiled_file = compiled.read()
             test_file = test.read()
@@ -130,6 +172,15 @@ class TestOurTestServerInstance(ODKSMTest):
             f.write("protected")
         self.instance._prepare_server_core()
         assert not islink(join(server_folder, "run_server.bat"))
+
+    def test_should_protect_server_config(self, reset_folder_structure):
+        """Our test server instance should protect server.config."""
+        server_folder = join(self.test_path, "__server__" + self.instance.S.server_instance_name)
+        name = self.instance.S.bat_settings.server_config
+        with open(join(self.test_path, name), "w+") as f:
+            f.write("protected")
+        self.instance._prepare_server_core()
+        assert not islink(join(server_folder, name))
 
     def test_should_init_copied_and_linked_mods(self, reset_folder_structure):
         """Create instance should init copied and linked mods."""
