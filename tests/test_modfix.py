@@ -15,19 +15,19 @@ class TestAModFix(ODKSMTest):
 
     def test_should_take_as_arguments_hooks(self):
         """A mod fix should take as arguments hooks."""
-        fix = ModFix(
-            name="testmod",
-            hook_pre=lambda x: 1,
-            hook_replace=lambda x: 2,
-            hook_post=lambda x: 3
-        )
+        class ModFixTest(ModFix):
+            name = "ace"
+            hook_pre = lambda s, x: 1
+            hook_replace = lambda s, x: 2
+            hook_post = lambda s, x: 3
+        fix = ModFixTest()
         assert isinstance(fix.hook_replace, Callable)
         assert isinstance(fix.hook_pre, Callable)
         assert isinstance(fix.hook_post, Callable)
         assert fix.hook_pre(None) == 1
         assert fix.hook_replace(None) == 2
         assert fix.hook_post(None) == 3
-        assert fix.name == "testmod"
+        assert fix.name == "ace"
 
     def test_module_should_offer_a_list_of_registered_fix(self):
         """A mod fix module should offer a list of registered fix."""
@@ -38,8 +38,7 @@ class TestAModFix(ODKSMTest):
 class TestAServerInstance(ODKSMTest):
     """Test: A Server Instance ..."""
 
-    @staticmethod
-    def dummy_hook(server_instance):
+    def dummy_hook(self, server_instance):
         pass
 
     @pytest.fixture(autouse=True)
@@ -59,26 +58,38 @@ class TestAServerInstance(ODKSMTest):
 
     def test_should_call_its_pre_hook_if_present(self, mocker, reset_folder_structure):
         """A server instance should call its pre hook if present."""
-        df = mocker.patch.object(self, "dummy_hook", side_effect=self.dummy_hook)
-        self.instance.registered_fix = [ModFix(name="ace", hook_pre=self.dummy_hook)]
+        class ModFixTest(ModFix):
+            name = "ace"
+            hook_pre = self.dummy_hook
+        mf = ModFixTest()
+        hook = mocker.patch.object(mf, "hook_pre", side_effect=mf.hook_pre)
+        self.instance.registered_fix = [mf]
         self.instance._init_mods(["ace"])
-        df.assert_called_with(self.instance)
+        hook.assert_called_with(self.instance)
         assert isdir(join(self.instance.get_server_instance_path(), self.instance.S.copied_mod_folder_name, "@ace"))
 
     def test_should_call_its_post_hook_if_present(self, mocker, reset_folder_structure):
         """A server instance should call its post hook if present."""
-        df = mocker.patch.object(self, "dummy_hook", side_effect=self.dummy_hook)
-        self.instance.registered_fix = [ModFix(name="ace", hook_post=self.dummy_hook)]
+        class ModFixTest(ModFix):
+            name = "ace"
+            hook_post = self.dummy_hook
+        mf = ModFixTest()
+        hook = mocker.patch.object(mf, "hook_post", side_effect=mf.hook_post)
+        self.instance.registered_fix = [mf]
         self.instance._init_mods(["ace"])
-        df.assert_called_with(self.instance)
+        hook.assert_called_with(self.instance)
         assert isdir(join(self.instance.get_server_instance_path(), self.instance.S.copied_mod_folder_name, "@ace"))
 
     def test_should_call_its_replace_hook_if_present(self, mocker, reset_folder_structure):
         """A server instance should call its replace hook if present."""
-        df = mocker.patch.object(self, "dummy_hook", side_effect=self.dummy_hook)
-        self.instance.registered_fix = [ModFix(name="ace", hook_replace=self.dummy_hook)]
+        class ModFixTest(ModFix):
+            name = "ace"
+            hook_replace = self.dummy_hook
+        mf = ModFixTest()
+        hook = mocker.patch.object(mf, "hook_replace", side_effect=mf.hook_replace)
+        self.instance.registered_fix = [mf]
         self.instance._init_mods(["ace"])
-        df.assert_called_with(self.instance)
+        hook.assert_called_with(self.instance)
         assert not isdir(join(self.instance.get_server_instance_path(),
                               self.instance.S.copied_mod_folder_name, "@ace"))
 
