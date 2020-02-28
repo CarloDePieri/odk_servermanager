@@ -1,0 +1,81 @@
+// GLOBAL SETTINGS
+hostname = "{{ hostname }}";
+password = "{{ password }}";
+passwordAdmin = "{{ password_admin }}";
+reportingIP = "arma3pc.master.gamespy.com";
+logFile = "serverA3A.log";
+statisticsEnabled = 1;
+
+
+// WELCOME MESSAGE ("message of the day")
+// It can be several lines, separated by comma
+// Empty messages "" will not be displayed at all but are only for increasing the interval
+
+motd[] = {
+    "BENVENUTI NEL SERVER",
+    " {{ hostname }} ",
+	"ODK Clan Italy",
+	"http://www.odkclan.it/",
+    " ",	
+   "RECLUTAMENTI APERTI",
+};
+
+motdInterval = 5; // Time interval (in seconds) between each message
+
+// JOINING RULES
+maxPlayers		= 65;		// Maximum amount of players. Civilians and watchers, beholder, bystanders and so on also count as player.
+
+// VOTING
+voteMissionPlayers	= 1;        	// Tells the server how many people must connect so that it displays the mission selection screen.
+voteThreshold		= 0.33;     	// 33% or more players need to vote for something, for example an admin or a new map, to become effective
+//voteMissionPlayers	= 0;
+
+// INGAME SETTINGS
+disableVoN		= 1;        	// If set to 1, Voice over Net will not be available
+vonCodecQuality         = 5;        	// Quality from 1 to 10
+persistent		= 1;        	// If 1, missions still run on even after the last player disconnected.
+
+// MOD ISSUES
+kickDuplicate = 1;
+requiredSecureId = 1;
+timeStampFormat = "short";
+
+allowedLoadFileExtensions[] = {"hpp","sqs","sqf","fsm","cpp","paa","txt","xml","inc","ext","sqm","ods","fxy","lip","csv","kb","bik","bikb","html","htm","biedi"}; //only allow files with those extensions to be loaded via loadFile command (since Arma 3 build 1.19.124216)
+allowedPreprocessFileExtensions[] = {"hpp","sqs","sqf","fsm","cpp","paa","txt","xml","inc","ext","sqm","ods","fxy","lip","csv","kb","bik","bikb","html","htm","biedi"}; //only allow files with those extensions to be loaded via preprocessFile/preprocessFileLineNumber commands (since Arma 3 build 1.19.124323)
+allowedHTMLLoadExtensions[] = {"htm","html","xml","txt"}; //only allow files with those extensions to be loaded via HTMLLoad command (since Arma 3 build 1.27.126715)
+//allowedHTMLLoadURIs = {}; // Leave commented to let missions/campaigns/addons decide what URIs are supported. Uncomment to define server-level restrictions for URIs
+
+// SCRIPTING ISSUES
+onUserConnected = "";			
+onUserDisconnected = "";		
+doubleIdDetected = "";			
+allowedFilePatching = 0;
+
+// NETWORK SETTINGS
+maxDesync = 3000;
+maxPing = 400;
+maxPacketLoss = 49;
+disconnectTimeout = 5;
+
+// SIGNATURE VERIFICATION
+verifySignatures = 2;
+onUnsignedData = "kick (_this select 0)";		// unsigned data detected
+onHackedData = 	"kick (_this select 0)";	//"ban (_this select 0)";			// tampering of the signature detected
+onDifferentData = "";
+
+BattlEye = 1;					// Server to use BattlEye system
+
+// STEAM SETTINGS
+steamPort = 9366;
+
+headlessClients[]={"127.0.0.1"};
+
+// MISSIONS CYCLE (see below) We've already added wasteland for you.
+class Missions 
+{
+	class Mission1
+	{
+		template="{{ mission_template }}";
+		difficulty="mercenary";
+	};
+};

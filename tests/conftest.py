@@ -67,7 +67,7 @@ def assert_requires_arguments():
 
 # Test stubs
 def sb_stub_obj() -> ServerBatSettings:
-    return ServerBatSettings("title", "2000", r"c:\server.config", r"c:\server.cfg", "128")
+    return ServerBatSettings("title", "2000", r"serverConfig.cfg", r"serverCfg.cfg", "128")
 
 
 def sc_stub_obj() -> ServerConfigSettings:

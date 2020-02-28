@@ -35,7 +35,7 @@ class ServerInstance:
 
     def _filter_symlinks(self, element: str) -> bool:
         """Filter out certain directory that won't be symlinked."""
-        not_to_be_symlinked = ["!Workshop", self.keys_folder_name, "run_server.bat"]
+        not_to_be_symlinked = ["!Workshop", self.keys_folder_name, "run_server.bat", self.S.bat_settings.server_config]
         return not (element.startswith(self.S.server_instance_prefix) or element in not_to_be_symlinked)
 
     def _prepare_server_core(self) -> None:
@@ -123,6 +123,16 @@ class ServerInstance:
         settings.server_root = self.get_server_instance_path()
         # compose and save the bat
         compile_from_template(template_file_content, compiled_bat_path, settings)
+
+    def _compile_config_file(self) -> None:
+        """Compile an instance specific cfg file that will be passed as -config flag to the server."""
+        # recover template file and prepare composed bat file path
+        template_file_content = self._read_resource_file('templates/server_cfg_template.txt')
+        compiled_config_path = join(self.get_server_instance_path(), self.S.bat_settings.server_config)
+        # prepare settings
+        settings = self.S.config_settings.to_dict()
+        # compose and save the bat
+        compile_from_template(template_file_content, compiled_config_path, settings)
 
     @staticmethod
     def _read_resource_file(file: str) -> str:
