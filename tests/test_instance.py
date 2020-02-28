@@ -4,50 +4,16 @@ import pytest
 
 from conftest import test_folder_structure_path, spy
 from odksm_test import ODKSMTest
-from odk_servermanager.instance import ServerInstance, ServerInstanceSettings
-
-
-class TestServerSettings:
-    """Test: ServerInstanceSettings..."""
-
-    def test_should_have_decent_default(self):
-        """Server settings should have decent default."""
-        instance_name = "server0"
-        settings = ServerInstanceSettings(instance_name)
-        assert settings.server_instance_name == instance_name
-        assert settings.arma_folder == settings["arma_folder"]  # since it's a box
-        assert settings.arma_folder == r"C:\Program Files (x86)\Steam\steamapps\common\Arma 3"
-        assert settings.mods_to_be_copied == []
-        assert settings.linked_mod_folder_name == "!Mods_linked"
-        assert settings.copied_mod_folder_name == "!Mods_copied"
-        assert settings.server_instance_prefix == "__server__"
-        assert settings.server_instance_root == r"C:\Program Files (x86)\Steam\steamapps\common\Arma 3"
-
-    def test_should_be_settable(self):
-        """Server settings should be settable."""
-        instance_name = "server0"
-        arma_folder = r"C:\My Games\Arma 3"
-        mods_to_be_copied = []
-        linked_mod_folder_name = "!Mods_l"
-        copied_mod_folder_name = "!Mods_c"
-        server_instance_prefix = "__SSS__"
-        server_instance_root = r"C:\My Servers\Arma 3"
-        settings = ServerInstanceSettings(instance_name, arma_folder, mods_to_be_copied, linked_mod_folder_name,
-                                          copied_mod_folder_name, server_instance_prefix, server_instance_root)
-        assert settings.arma_folder == arma_folder
-        assert settings.mods_to_be_copied == mods_to_be_copied
-        assert settings.linked_mod_folder_name == linked_mod_folder_name
-        assert settings.copied_mod_folder_name == copied_mod_folder_name
-        assert settings.server_instance_prefix == server_instance_prefix
-        assert settings.server_instance_root == server_instance_root
+from odk_servermanager.instance import ServerInstance
+from odk_servermanager.settings import ServerInstanceSettings, ServerBatSettings
 
 
 class TestAServerInstance:
     """Test: A server Instance..."""
 
-    def test_should_save_its_config(self):
+    def test_should_save_its_config(self, sc_stub, sb_stub):
         """A server instance should save its config."""
-        settings = ServerInstanceSettings("server0")
+        settings = ServerInstanceSettings("server0", sb_stub, sc_stub)
         instance = ServerInstance(settings)
         assert instance.S == settings
 
@@ -56,27 +22,27 @@ class TestWhenBatComposingTheServerInstance(ODKSMTest):
     """Test: when bat composing bat the server instance..."""
 
     @pytest.fixture(scope="class", autouse=True)
-    def setup(self, request, class_reset_folder_structure):
+    def setup(self, request, class_reset_folder_structure, c_sc_stub):
         """TestCompileBat setup"""
         request.cls.test_path = test_folder_structure_path()
         server_instance_name = "TestServer0"
+        sb = ServerBatSettings(server_title="ODK Training Server", server_port="2202",
+                               server_config="serverTraining.cfg", server_cfg="Arma3Training.cfg",
+                               server_max_mem="8192", server_flags="-filePatching -autoinit -enableHT")
+        sc = c_sc_stub
         request.cls.settings = ServerInstanceSettings(
             server_instance_name=server_instance_name,
+            bat_settings=sb,
+            config_settings=sc,
             arma_folder=self.test_path,
             server_instance_root=self.test_path,
-            server_title="ODK Training Server",
             mods_to_be_copied=["CBA_A3"],
             user_mods_list=["ace", "CBA_A3", "ODKAI"],
             server_mods_list=["AdvProp", "ODKMIN"],
-            server_port="2202",
-            server_config="serverTraining.cfg",
-            server_cfg="Arma3Training.cfg",
-            server_max_mem="8192",
-            server_flags="-filePatching -autoinit -enableHT"
         )
         request.cls.instance = ServerInstance(self.settings)
         self.instance._compile_bat_file()
-        request.cls.compiled_bat = join(self.instance._get_server_instance_path(), "run_server.bat")
+        request.cls.compiled_bat = join(self.instance.get_server_instance_path(), "run_server.bat")
 
     def test_should_create_the_bat_file(self):
         """When bat composing the server instance should create the bat file."""
@@ -89,7 +55,7 @@ class TestWhenBatComposingTheServerInstance(ODKSMTest):
             compiled_file = compiled.read()
             test_file = test.read()
             # fix generic path in the test file
-            instance_path = self.instance._get_server_instance_path()
+            instance_path = self.instance.get_server_instance_path()
             test_file = test_file.replace(r"C:\Program Files (x86)\Steam\steamapps\common\Arma 3",
                                           instance_path)
             test_file = test_file.replace("C:", splitdrive(self.compiled_bat)[0])
@@ -100,13 +66,16 @@ class TestOurTestServerInstance(ODKSMTest):
     """Test: our test server instance..."""
 
     @pytest.fixture(scope="class", autouse=True)
-    def setup(self, request):
+    def setup(self, request, c_sc_stub, c_sb_stub):
         """TestOurTestServerInstance setup"""
         server_name = "TestServer0"
         mods_to_be_copied = ["CBA_A3"]
         request.cls.test_path = test_folder_structure_path()
+        request.cls.sb = c_sb_stub
+        request.cls.sc = c_sc_stub
         request.cls.settings = ServerInstanceSettings(
             server_name,
+            self.sb, self.sc,
             mods_to_be_copied=mods_to_be_copied,
             arma_folder=self.test_path,
             server_instance_root=self.test_path
@@ -116,7 +85,8 @@ class TestOurTestServerInstance(ODKSMTest):
     def test_should_be_able_to_create_a_new_instance_folder(self, reset_folder_structure):
         """Our test server instance should be able to create a new instance folder."""
         server_name = "TestServer1"
-        settings = ServerInstanceSettings(server_name, arma_folder=self.test_path, server_instance_root=self.test_path)
+        settings = self.settings.copy()
+        settings.server_instance_name = server_name
         instance = ServerInstance(settings)
         instance._new_server_folder()
         assert isdir(join(self.test_path, "__server__" + server_name))
@@ -183,7 +153,7 @@ class TestOurTestServerInstance(ODKSMTest):
     def test_should_be_able_to_get_the_server_instance_path(self):
         """Our test server instance should be able to get the server instance path."""
         path = self.test_path + r"\__server__" + self.instance.S.server_instance_name
-        assert self.instance._get_server_instance_path() == path
+        assert self.instance.get_server_instance_path() == path
 
     def test_should_be_able_to_recognize_a_key_file(self, reset_folder_structure):
         """Our test server instance should be able to recognize a key file."""
@@ -200,7 +170,7 @@ class TestOurTestServerInstance(ODKSMTest):
         self.instance._prepare_server_core()
         self.instance._init_mods(user_mods_list)
         self.instance._init_mods(server_mods_list)
-        keys_folder = join(self.instance._get_server_instance_path(), self.instance.keys_folder_name)
+        keys_folder = join(self.instance.get_server_instance_path(), self.instance.keys_folder_name)
         # end setup, begin actual test
         self.instance._link_keys()
         keys_folder_files = listdir(keys_folder)
@@ -209,9 +179,9 @@ class TestOurTestServerInstance(ODKSMTest):
 
     def test_should_simply_skip_mods_without_keys_when_linking_keys(self, reset_folder_structure):
         """Our test server instance should simply skip mods without keys when linking keys."""
-        copied_mods = join(self.instance._get_server_instance_path(), "!Mods_copied")
-        mkdir(join(self.instance._get_server_instance_path(), "!Mods_linked"))
-        keys_folder = join(self.instance._get_server_instance_path(), "Keys")
+        copied_mods = join(self.instance.get_server_instance_path(), "!Mods_copied")
+        mkdir(join(self.instance.get_server_instance_path(), "!Mods_linked"))
+        keys_folder = join(self.instance.get_server_instance_path(), "Keys")
         mkdir(copied_mods)
         mkdir(keys_folder)
         mkdir(join(copied_mods, "test_mod"))
@@ -226,26 +196,26 @@ class TestServerInstanceInit(ODKSMTest):
     """Test: ServerInstance init..."""
 
     @pytest.fixture(scope="class", autouse=True)
-    def setup(self, request, class_reset_folder_structure):
+    def setup(self, request, class_reset_folder_structure, c_sc_stub):
         """TestServerInstanceInit setup"""
         server_name = "TestServer1"
         request.cls.test_path = test_folder_structure_path()
+        sb = ServerBatSettings(server_title="ODK Training Server", server_port="2202",
+                               server_config="serverTraining.cfg", server_cfg="Arma3Training.cfg",
+                               server_max_mem="8192", server_flags="-filePatching -autoinit -enableHT")
+        sc = c_sc_stub
         request.cls.settings = ServerInstanceSettings(
-            server_name,
+            server_instance_name=server_name,
+            bat_settings=sb,
+            config_settings=sc,
+            arma_folder=self.test_path,
+            server_instance_root=self.test_path,
             mods_to_be_copied=["CBA_A3"],
             user_mods_list=["ace", "CBA_A3", "ODKAI"],
             server_mods_list=["AdvProp", "ODKMIN"],
-            arma_folder=self.test_path,
-            server_instance_root=self.test_path,
-            server_title="ODK Training Server",
-            server_port="2202",
-            server_config="serverTraining.cfg",
-            server_cfg="Arma3Training.cfg",
-            server_max_mem="8192",
-            server_flags="-filePatching -autoinit -enableHT"
         )
         request.cls.instance = ServerInstance(self.settings)
-        request.cls.instance_folder = self.instance._get_server_instance_path()
+        request.cls.instance_folder = self.instance.get_server_instance_path()
         # set up all needed spies
         with spy(self.instance._new_server_folder) as request.cls.new_server_fun, \
                 spy(self.instance._prepare_server_core) as request.cls.prepare_server_fun, \
@@ -276,7 +246,7 @@ class TestServerInstanceInit(ODKSMTest):
     def test_should_symlink_all_mods_keys(self):
         """Server instance init should symlink all mods keys."""
         self.init_keys_fun.assert_called()
-        keys_folder = join(self.instance._get_server_instance_path(), self.instance.keys_folder_name)
+        keys_folder = join(self.instance.get_server_instance_path(), self.instance.keys_folder_name)
         keys_folder_files = listdir(keys_folder)
         assert len(keys_folder_files) == len(self.instance.S.user_mods_list) + len(
             self.instance.S.server_mods_list) + len(self.instance.arma_keys)
@@ -291,12 +261,13 @@ class TestAnInstanceWithANonExistingMod(ODKSMTest):
     """Test: An instance with a non existing mod..."""
 
     @pytest.fixture(scope="class", autouse=True)
-    def setup(self, request, class_reset_folder_structure):
+    def setup(self, request, class_reset_folder_structure, c_sc_stub, c_sb_stub):
         """TestAnInstanceWithANonExistingMod setup"""
         server_name = "TestServer1"
         request.cls.test_path = test_folder_structure_path()
         request.cls.settings = ServerInstanceSettings(
             server_name,
+            c_sb_stub, c_sc_stub,
             user_mods_list=["NOT_THERE"],
             arma_folder=self.test_path,
             server_instance_root=self.test_path,
@@ -309,10 +280,10 @@ class TestAnInstanceWithANonExistingMod(ODKSMTest):
         with pytest.raises(ModNotFound):
             self.instance._check_mods_folders()
 
-    def test_should_check_for_it_and_stop_before_changin_anything(self, reset_folder_structure):
-        """An instance with a non existing mod should check for it and stop before changin anything."""
+    def test_should_check_for_it_and_stop_before_changing_anything(self, reset_folder_structure):
+        """An instance with a non existing mod should check for it and stop before changing anything."""
         from odk_servermanager.instance import ModNotFound
         with pytest.raises(ModNotFound), spy(self.instance._check_mods_folders) as check_fun:
             self.instance.init()
-            check_fun.assert_called()
-        assert not isdir(self.instance._get_server_instance_path())
+        check_fun.assert_called()
+        assert not isdir(self.instance.get_server_instance_path())

@@ -9,7 +9,7 @@ from odk_servermanager.utils import symlink
 class ModFix:
     """Class used to apply specific operations before, in place of or after copying a certain mod into its server
     instance folder.
-    All hooks are function that take as only argument the ServerInstance object.
+    All hooks are functions that take as its only argument the ServerInstance object.
 
     :name: The mod DisplayName
     :hook_pre: This hook gets called before the mod copy begin.
@@ -28,10 +28,14 @@ class ModFix:
 
 
 def cba_replace_hook(server_instance: ServerInstance) -> None:
-    """Used to symlink all mods folder but the userconfig one, where a custom cba settings file can be placed."""
+    """Used to symlink all mod files and folders but the userconfig one, where a custom cba settings file can be placed.
+
+    This hook will look for following fields in mod_fix_settings:
+    :cba_settings: the full path of the custom cba settings. If not found, will default to the empty default one.
+    """
     # Create the folder
     arma_mod_folder = join(server_instance.S.arma_folder, "!Workshop", "@CBA_A3")
-    mod_folder = join(server_instance._get_server_instance_path(), server_instance.S.copied_mod_folder_name, "@CBA_A3")
+    mod_folder = join(server_instance.get_server_instance_path(), server_instance.S.copied_mod_folder_name, "@CBA_A3")
     mkdir(mod_folder)
     # Symlink everything but the userconfig folder
     to_be_symlinked = list(filter(lambda x: x != "userconfig", listdir(arma_mod_folder)))
@@ -44,7 +48,7 @@ def cba_replace_hook(server_instance: ServerInstance) -> None:
     # Recover the custom cba settings if present else copy the original one
     mod_fix_settings = server_instance.S.mod_fix_settings
     if mod_fix_settings is not None and mod_fix_settings.get("cba_settings", None) is not None:
-        src = mod_fix_settings.cba_settings
+        src = mod_fix_settings["cba_settings"]
         dest = join(mod_folder, "userconfig", "cba_settings.sqf")
         symlink(src, dest)
     else:
@@ -53,7 +57,8 @@ def cba_replace_hook(server_instance: ServerInstance) -> None:
         shutil.copy2(src, dest)
 
 
-# TODO docs
+# This module variable will store all registered ModFix and then will be used by ServerInstance to know which fix to
+# apply.
 registered_fix: List[ModFix] = [
     ModFix(
         name="CBA_A3",

@@ -13,7 +13,7 @@ echo ..
 echo ...
 echo Launching Server %date% %time%
 {{ server_drive }}
-cd {{ server_root }}
+cd "{{ server_root }}"
 echo {{ server_title }} Monitor... Active !
 start "Arma3" /min /wait arma3server_x64.exe -port={{ server_port }} -config={{ server_config }} -cfg={{ server_cfg }} -maxMem={{ server_max_mem }} {{ server_flags }} -mod="{{ user_mods }}" -servermod="{{ server_mods }}"
 ping 127.0.0.1 -n 15 >NUL

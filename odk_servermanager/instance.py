@@ -1,83 +1,17 @@
 import shutil
 from os import mkdir, listdir
-from os.path import isdir, islink, join, splitdrive, splitext, isfile, abspath
-from typing import List, Dict
+from os.path import isdir, islink, join, splitext, isfile, abspath
+from typing import List
 
-from box import Box
+import pkg_resources
 
-from odk_servermanager.utils import symlink
-
-default_arma_path = r"C:\Program Files (x86)\Steam\steamapps\common\Arma 3"
-
-
-class ServerInstanceSettings(Box):
-    """TODO"""
-    # DOC FOR EACH SETTING
-    # ODKSM settings
-    server_instance_name: str
-    arma_folder: str
-    server_instance_root: str
-    server_instance_prefix: str
-    linked_mod_folder_name: str
-    copied_mod_folder_name: str
-    # mods
-    mods_to_be_copied: List[str]
-    user_mods_list: List[str]
-    server_mods_list: List[str]
-    skip_keys: List[str]
-    mod_fix_settings: Dict[str, str]
-    # ARMA settings
-    server_title: str
-    server_port: str
-    server_config: str
-    server_cfg: str
-    server_max_mem: str
-    server_flags: str
-
-    def __init__(self,
-                 server_instance_name: str,
-                 arma_folder=default_arma_path,
-                 mods_to_be_copied=None,
-                 linked_mod_folder_name="!Mods_linked",
-                 copied_mod_folder_name="!Mods_copied",
-                 server_instance_prefix="__server__",
-                 server_instance_root=default_arma_path,
-                 user_mods_list=None,
-                 server_mods_list=None,
-                 mod_fix_settings=None,
-                 skip_keys=None,
-                 server_title="ODK Training Server",
-                 server_port="2202",
-                 server_config="serverCfg.cfg",
-                 server_cfg="serverConfig.cfg",
-                 server_max_mem="8192",
-                 server_flags=""
-                 ):
-        skip_keys = skip_keys if skip_keys is not None else []
-        skip_keys.append("!DO_NOT_CHANGE_FILES_IN_THESE_FOLDERS")
-        super().__init__(
-            server_instance_name=server_instance_name,
-            arma_folder=arma_folder,
-            server_instance_root=server_instance_root,
-            server_instance_prefix=server_instance_prefix,
-            copied_mod_folder_name=copied_mod_folder_name,
-            linked_mod_folder_name=linked_mod_folder_name,
-            mods_to_be_copied=mods_to_be_copied if mods_to_be_copied is not None else [],
-            user_mods_list=user_mods_list if user_mods_list is not None else [],
-            server_mods_list=server_mods_list if server_mods_list is not None else [],
-            skip_keys=skip_keys,
-            server_title=server_title,
-            server_port=server_port,
-            server_config=server_config,
-            server_cfg=server_cfg,
-            server_max_mem=server_max_mem,
-            server_flags=server_flags
-            )
-        self.mod_fix_settings = Box(mod_fix_settings) if mod_fix_settings is not None else None
+from odk_servermanager.settings import ServerInstanceSettings
+from odk_servermanager.utils import symlink, compile_from_template
 
 
 class ServerInstance:
-    """TODO"""
+    """This class is responsible for creating and keeping updated all needed files to launch an
+    Arma 3dedicated server instance."""
 
     keys_folder_name = "Keys"
     arma_keys = ["a3.bikey", "a3c.bikey", "gm.bikey"]
@@ -87,13 +21,13 @@ class ServerInstance:
         from odk_servermanager.modfix import registered_fix
         self.registered_fix = registered_fix
 
-    def _get_server_instance_path(self) -> str:
+    def get_server_instance_path(self) -> str:
         """Return the server instance path."""
         return join(self.S.server_instance_root, self.S.server_instance_prefix + self.S.server_instance_name)
 
     def _new_server_folder(self) -> None:
         """Create a new server folder."""
-        server_folder = self._get_server_instance_path()
+        server_folder = self.get_server_instance_path()
         if not isdir(server_folder):
             mkdir(server_folder)
         else:
@@ -107,7 +41,7 @@ class ServerInstance:
     def _prepare_server_core(self) -> None:
         """Symlink or create all needed files and dir for a new server instance."""
         # make all needed symlink
-        server_folder = self._get_server_instance_path()
+        server_folder = self.get_server_instance_path()
         arma_folder_list = listdir(self.S.arma_folder)
         to_be_linked = list(filter(lambda x: self._filter_symlinks(x), arma_folder_list))
         for el in to_be_linked:
@@ -128,7 +62,7 @@ class ServerInstance:
     def _init_mods(self, mods_list: List[str]) -> None:
         """This will link mods to an instance, copying or symlinking them."""
         if len(mods_list) > 0:
-            server_folder = self._get_server_instance_path()
+            server_folder = self.get_server_instance_path()
             workshop_folder = join(self.S.arma_folder, "!Workshop")
             for mod in mods_list:
                 mod_folder = "@" + mod
@@ -178,31 +112,22 @@ class ServerInstance:
 
     def _compile_bat_file(self) -> None:
         """Compile an instance specific bat file to run the server."""
-        import pkg_resources
-        from jinja2 import Template
-        # recover template file
-        template_file_content = pkg_resources.resource_string('odk_servermanager', 'templates/run_server_template.txt')
-        template = Template(template_file_content.decode("UTF-8"))
-        # prepare needed elements
-        compiled_bat_path = join(self._get_server_instance_path(), "run_server.bat")
-        user_mods = self._compose_relative_path_mods(self.S.user_mods_list)
-        server_mods = self._compose_relative_path_mods(self.S.server_mods_list)
-        instance_path = self._get_server_instance_path()
-        # compile the template with all correct configuration and save the file
-        compiled = template.render(
-            server_title=self.S.server_title,
-            server_port=self.S.server_port,
-            server_max_mem=self.S.server_max_mem,
-            server_config=self.S.server_config,
-            server_cfg=self.S.server_cfg,
-            server_flags=self.S.server_flags,
-            server_drive=splitdrive(instance_path)[0],
-            server_root='"{}"'.format(instance_path),
-            user_mods=user_mods,
-            server_mods=server_mods
-        )
-        with open(compiled_bat_path, "w+") as f:
-            f.write(compiled)
+        # recover template file and prepare composed bat file path
+        template_file_content = self._read_resource_file('templates/run_server_template.txt')
+        compiled_bat_path = join(self.get_server_instance_path(), "run_server.bat")
+        # prepare settings
+        settings = self.S.bat_settings.copy()
+        settings.user_mods = self._compose_relative_path_mods(self.S.user_mods_list)
+        settings.server_mods = self._compose_relative_path_mods(self.S.server_mods_list)
+        settings.server_drive = self.S.server_drive
+        settings.server_root = self.get_server_instance_path()
+        # compose and save the bat
+        compile_from_template(template_file_content, compiled_bat_path, settings)
+
+    @staticmethod
+    def _read_resource_file(file: str) -> str:
+        """Return the content of a resource file."""
+        return pkg_resources.resource_string('odk_servermanager', file).decode("UTF-8")
 
     @staticmethod
     def _is_keyfile(filename: str) -> bool:
@@ -221,12 +146,12 @@ class ServerInstance:
                 mod_key_folder = join(mod_folder, key_folder[0])
                 key_file = list(filter(lambda x: self._is_keyfile(join(mod_key_folder, x)), listdir(mod_key_folder)))[0]
                 src = join(mod_key_folder, key_file)
-                dest = join(self._get_server_instance_path(), self.keys_folder_name, key_file)
+                dest = join(self.get_server_instance_path(), self.keys_folder_name, key_file)
                 symlink(src, dest)
 
     def _link_keys(self) -> None:
         """Link all keys from the copied and the linked mod folders to the instance keys folder."""
-        root = self._get_server_instance_path()
+        root = self.get_server_instance_path()
         self._link_keys_in_folder(join(root, self.S.copied_mod_folder_name))
         self._link_keys_in_folder(join(root, self.S.linked_mod_folder_name))
 
