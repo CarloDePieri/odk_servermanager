@@ -74,7 +74,7 @@ class ServerInstanceSettings(Box):
                  linked_mod_folder_name: str = "!Mods_linked", copied_mod_folder_name: str = "!Mods_copied",
                  server_instance_prefix: str = "__server__", server_instance_root: str = "",
                  user_mods_list: List[str] = [], server_mods_list: List[str] = [], skip_keys: List[str] = [],
-                 mod_fix_settings: Dict[str, str] = []):
+                 mod_fix_settings: Dict[str, str] = {}):
         if arma_folder == "":
             arma_folder = os.path.join(os.getenv("ProgramFiles"), r"Steam\steamapps\common\Arma 3")
         if server_instance_root == "":

@@ -88,7 +88,7 @@ class TestAServerInstanceSettings:
         assert si.user_mods_list == []
         assert si.server_mods_list == []
         assert si.skip_keys == ["!DO_NOT_CHANGE_FILES_IN_THESE_FOLDERS"]
-        assert si.mod_fix_settings == []
+        assert si.mod_fix_settings == {}
 
     def test_should_set_its_fields(self):
         """A server instance settings should set its fields."""
