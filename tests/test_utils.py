@@ -26,7 +26,7 @@ class TestCompileFromTemplate(ODKSMTest):
     @pytest.fixture(scope="class", autouse=True)
     def setup(self, request):
         """TestCompileFromTemplate setup"""
-        template_file = abspath(join(test_resources, "template.ini"))
+        template_file = abspath(join(test_resources, "template.txt"))
         with open(template_file, "r") as f:
             request.cls.template_file_content = f.read()
         request.cls.compiled_file = join(test_folder_structure_path(), "compiled.ini")
