@@ -15,11 +15,17 @@ class ModFix:
     :hook_pre: This hook gets called before the mod copy begin.
     :hook_replace: This hook gets called instead of the usual mod copy.
     :hook_post: This hook gets called after the mod copy end.
+    :hook_update_pre: This hook gets called before the mod update begin.
+    :hook_update_replace: This hook gets called instead of the usual mod update.
+    :hook_update_post: This hook gets called after the mod update end.
     """
     name: str = ""
     hook_pre: Union[Callable[[ServerInstance], None], None] = None
     hook_replace: Union[Callable[[ServerInstance], None], None] = None
     hook_post: Union[Callable[[ServerInstance], None], None] = None
+    hook_update_pre: Union[Callable[[ServerInstance], None], None] = None
+    hook_update_replace: Union[Callable[[ServerInstance], None], None] = None
+    hook_update_post: Union[Callable[[ServerInstance], None], None] = None
 
 
 class ModFixCBA(ModFix):
@@ -56,6 +62,12 @@ class ModFixCBA(ModFix):
             src = join(arma_mod_folder, "userconfig", "cba_settings.sqf")
             dest = join(mod_folder, "userconfig", "cba_settings.sqf")
             shutil.copy2(src, dest)
+
+    def hook_update_replace(self, server_instance: ServerInstance) -> None:
+        """This empty hook will prevent the update of an already there cba instance.
+        This is because the hook_replace already take care of mod updating via symlinking and we don't want to lose
+        eventual customization to the cba_settings."""
+        pass
 
 
 # This module variable will store all registered ModFix and then will be used by ServerInstance to know which fix to

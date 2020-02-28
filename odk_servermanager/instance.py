@@ -229,17 +229,31 @@ class ServerInstance:
 
     def _update_copied_mod(self, mod_name: str) -> None:
         """Update a to be copied mod, calling the ModFix hooks if a ModFix is present."""
-        copied_mods_folder = join(self.get_server_instance_path(), self.S.copied_mod_folder_name)
-        already_there_mods = map(lambda x: x[1:], listdir(copied_mods_folder))
-        if mod_name in already_there_mods:
+        # Check if mod fixes are registered for this mod
+        mod_fix = list(filter(lambda x: x.name == mod_name, self.registered_fix))
+        mod_fix = mod_fix[0] if len(mod_fix) > 0 else None
+        # If available, call its pre update hook
+        if mod_fix is not None and mod_fix.hook_update_pre is not None:
+            mod_fix.hook_update_pre(self)
+        if mod_fix is not None and mod_fix.hook_update_replace is not None:
+            mod_fix.hook_update_replace(self)
+        else:
             self._clear_copied_mod(mod_name)
-        self._copy_mod(mod_name)
+            self._copy_mod(mod_name)
+        if mod_fix is not None and mod_fix.hook_update_post is not None:
+            mod_fix.hook_update_post(self)
 
     def _update_mods(self, mods: List[str]) -> None:
         """Update (symlinking or copying) all mods from a list."""
         for mod in mods:
             if mod in self.S.mods_to_be_copied:
-                self._update_copied_mod(mod)
+                copied_mods_folder = join(self.get_server_instance_path(), self.S.copied_mod_folder_name)
+                already_there_mods = map(lambda x: x[1:], listdir(copied_mods_folder))
+                if mod in already_there_mods:
+                    # These are the only ones that get really updated
+                    self._update_copied_mod(mod)
+                else:
+                    self._copy_mod(mod)
             else:
                 self._symlink_mod(mod)
 

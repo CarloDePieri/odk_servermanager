@@ -296,7 +296,6 @@ class TestOurTestServerInstance(ODKSMTest):
         assert not isdir(join(copied_mods, "@CBA_A3"))
         assert isdir(join(copied_mods, "@ace"))
 
-    @pytest.mark.runthis
     def test_should_be_able_to_update_its_mods(self, reset_folder_structure):
         """Our test server instance should be able to update its mods."""
         copied_mods_folder = join(self.instance.get_server_instance_path(), self.instance.S.copied_mod_folder_name)

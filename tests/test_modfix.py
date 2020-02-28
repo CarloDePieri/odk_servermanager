@@ -20,13 +20,22 @@ class TestAModFix(ODKSMTest):
             hook_pre = lambda s, x: 1
             hook_replace = lambda s, x: 2
             hook_post = lambda s, x: 3
+            hook_update_pre = lambda s, x: 4
+            hook_update_replace = lambda s, x: 5
+            hook_update_post = lambda s, x: 6
         fix = ModFixTest()
         assert isinstance(fix.hook_replace, Callable)
         assert isinstance(fix.hook_pre, Callable)
         assert isinstance(fix.hook_post, Callable)
+        assert isinstance(fix.hook_update_replace, Callable)
+        assert isinstance(fix.hook_update_pre, Callable)
+        assert isinstance(fix.hook_update_post, Callable)
         assert fix.hook_pre(None) == 1
         assert fix.hook_replace(None) == 2
         assert fix.hook_post(None) == 3
+        assert fix.hook_update_pre(None) == 4
+        assert fix.hook_update_replace(None) == 5
+        assert fix.hook_update_post(None) == 6
         assert fix.name == "ace"
 
     def test_module_should_offer_a_list_of_registered_fix(self):
@@ -50,6 +59,7 @@ class TestAServerInstance(ODKSMTest):
         request.cls.instance = ServerInstance(settings)
         self.instance._new_server_folder()
         self.instance._prepare_server_core()
+        self.instance._copy_mod("CBA_A3")
 
     def test_should_have_the_registered_fix_list(self, reset_folder_structure):
         """A server instance should have the registered fix list."""
@@ -93,6 +103,43 @@ class TestAServerInstance(ODKSMTest):
         assert not isdir(join(self.instance.get_server_instance_path(),
                               self.instance.S.copied_mod_folder_name, "@ace"))
 
+    def test_should_call_its_pre_update_hook_if_present(self, mocker, reset_folder_structure):
+        """A server instance should call its pre update hook if present."""
+        class ModFixTest(ModFix):
+            name = "CBA_A3"
+            hook_update_pre = self.dummy_hook
+        mf = ModFixTest()
+        hook = mocker.patch.object(mf, "hook_update_pre", side_effect=mf.hook_update_pre)
+        self.instance.registered_fix = [mf]
+        self.instance._update_copied_mod("CBA_A3")
+        hook.assert_called_with(self.instance)
+
+    def test_should_call_its_post_update_hook_if_present(self, mocker, reset_folder_structure):
+        """A server instance should call its post update hook if present."""
+        class ModFixTest(ModFix):
+            name = "CBA_A3"
+            hook_update_post = self.dummy_hook
+        mf = ModFixTest()
+        hook = mocker.patch.object(mf, "hook_update_post", side_effect=mf.hook_update_post)
+        self.instance.registered_fix = [mf]
+        self.instance._update_copied_mod("CBA_A3")
+        hook.assert_called_with(self.instance)
+
+    def test_should_call_its_replace_update_hook_if_present(self, mocker, reset_folder_structure):
+        """A server instance should call its replace update hook if present."""
+        class ModFixTest(ModFix):
+            name = "CBA_A3"
+            hook_update_replace = self.dummy_hook
+        mf = ModFixTest()
+        hook = mocker.patch.object(mf, "hook_update_replace", side_effect=mf.hook_update_replace)
+        custom_file = join(self.instance.get_server_instance_path(), self.instance.S.copied_mod_folder_name,
+                           "@CBA_A3", "custom")
+        touch(custom_file)
+        self.instance.registered_fix = [mf]
+        self.instance._update_copied_mod("CBA_A3")
+        hook.assert_called_with(self.instance)
+        assert isfile(custom_file)
+
 
 class TestModFixCba(ODKSMTest):
     """Test: ModFix cba..."""
@@ -133,3 +180,12 @@ class TestModFixCba(ODKSMTest):
         assert isfile(cba_settings)
         with open(cba_settings, "r") as f:
             assert f.read() == "test"
+
+    def test_should_manage_its_update(self):
+        """Mod fix cba should manage its update."""
+        cba_settings = join(self.mod_folder, "userconfig", "cba_settings.sqf")
+        with open(cba_settings, "a+") as f:
+            assert f.write("\nnew_config")
+        self.instance._update_copied_mod("CBA_A3")
+        with open(cba_settings, "r") as f:
+            assert f.read() == "test\nnew_config"
