@@ -13,6 +13,7 @@ pytest-sugar = "*"
 beautifulsoup4 = "*"
 Jinja2 = "*"
 python-box = "*"
+reusables = "*"
 
 [requires]
 python_version = "3.8"

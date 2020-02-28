@@ -1,4 +1,4 @@
-from os.path import isdir, join, islink
+from os.path import isdir, join, islink, isfile
 from typing import Callable, List
 
 import pytest
@@ -117,9 +117,9 @@ class TestModFixCba(ODKSMTest):
         """Mod fix cba should create the userconfig folder."""
         assert isdir(join(self.mod_folder, "userconfig"))
 
-    def test_should_link_the_custom_cba_settings(self):
-        """Mod fix cba should link the custom cba settings."""
+    def test_should_copy_the_custom_cba_settings(self):
+        """Mod fix cba should copy the custom cba settings."""
         cba_settings = join(self.mod_folder, "userconfig", "cba_settings.sqf")
-        assert islink(cba_settings)
+        assert isfile(cba_settings)
         with open(cba_settings, "r") as f:
             assert f.read() == "test"

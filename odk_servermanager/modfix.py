@@ -50,7 +50,7 @@ def cba_replace_hook(server_instance: ServerInstance) -> None:
     if mod_fix_settings is not None and mod_fix_settings.get("cba_settings", None) is not None:
         src = mod_fix_settings["cba_settings"]
         dest = join(mod_folder, "userconfig", "cba_settings.sqf")
-        symlink(src, dest)
+        shutil.copy2(src, dest)
     else:
         src = join(arma_mod_folder, "userconfig", "cba_settings.sqf")
         dest = join(mod_folder, "userconfig", "cba_settings.sqf")

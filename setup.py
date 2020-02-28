@@ -9,9 +9,9 @@ setup(
         author='Carlo De Pieri',
         description='ODKclan tool to manage its Arma 3 server instances.',
         install_requires=[
-            'beautifulsoup4==4.8.2',
-            'Jinja2==2.11.1',
-            'python-box==4.0.4'
+            'beautifulsoup4>=4.8.2',
+            'Jinja2>=2.11.1',
+            'python-box>=4.0.4'
             ],
         extras_require={
             'dev': [
