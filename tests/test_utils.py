@@ -26,18 +26,20 @@ class TestCompileFromTemplate(ODKSMTest):
     @pytest.fixture(scope="class", autouse=True)
     def setup(self, request):
         """TestCompileFromTemplate setup"""
-        request.cls.template_file = abspath(join(test_resources, "template.ini"))
+        template_file = abspath(join(test_resources, "template.ini"))
+        with open(template_file, "r") as f:
+            request.cls.template_file_content = f.read()
         request.cls.compiled_file = join(test_folder_structure_path(), "compiled.ini")
 
     def test_should_output_the_file(self, reset_folder_structure):
         """Compile from template should output the file."""
-        compile_from_template(self.template_file, self.compiled_file, {})
+        compile_from_template(self.template_file_content, self.compiled_file, {})
         assert isfile(self.compiled_file)
 
     def test_should_return_the_compiled_file(self, reset_folder_structure):
         """Compile from template should return the compiled file."""
         target = "TITLE\nThis is a DESC."
         settings = {"title": "TITLE", "description": "DESC"}
-        compile_from_template(self.template_file, self.compiled_file, settings)
+        compile_from_template(self.template_file_content, self.compiled_file, settings)
         with open(self.compiled_file, "r") as f:
             assert f.read() == target

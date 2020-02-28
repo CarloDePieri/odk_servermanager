@@ -18,11 +18,10 @@ def symlink(source: str, link_name: str) -> None:
             raise ctypes.WinError()
 
 
-def compile_from_template(template_file: str, compiled_file: str, settings: Dict) -> None:
+def compile_from_template(template_file_content: str, compiled_file: str, settings: Dict) -> None:
     """Read a template file and compiled it with the provided settings"""
     from jinja2 import Template
-    with open(template_file, "r") as f:
-        template = Template(f.read())
+    template = Template(template_file_content)
     compiled = template.render(settings)
     with open(compiled_file, "w+") as f:
         f.write(compiled)
