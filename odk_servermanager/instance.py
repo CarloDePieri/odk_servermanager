@@ -292,6 +292,15 @@ class ServerInstance:
         self._compile_bat_file()
         self._compile_config_file()
 
+    def update(self) -> None:
+        """Update an existing instance. This method assumes that the server instance is already there and functioning!
+        This will relink all linked mods and keys. It will REPLACE compiled files like run_server.bat and the server
+        config file with newly generated ones. By default this will also REPLACE all copied mod."""
+        self._check_mods_folders()
+        self._update_all_mods()
+        self._update_keys()
+        self._update_compiled_files()
+
 
 class DuplicateServerName(Exception):
     """"""

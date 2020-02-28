@@ -364,6 +364,22 @@ class TestOurTestServerInstance(ODKSMTest):
         compile_bat_fun.assert_called()
         compile_config_fun.assert_called()
 
+    def test_should_be_able_to_update(self, reset_folder_structure):
+        """Our test server instance should be able to update."""
+        self.instance._prepare_server_core()
+        self.instance._compile_bat_file()
+        self.instance._compile_config_file()
+        i = self.instance
+        with spy(i._check_mods_folders) as check_mods_fun, \
+                spy(i._update_all_mods) as update_mods_fun, \
+                spy(i._update_keys) as update_keys_fun, \
+                spy(i._update_compiled_files) as update_files_fun:
+            i.update()
+        check_mods_fun.assert_called()
+        update_mods_fun.assert_called()
+        update_keys_fun.assert_called()
+        update_files_fun.assert_called()
+
 
 class TestServerInstanceInit(ODKSMTest):
     """Test: ServerInstance init..."""
