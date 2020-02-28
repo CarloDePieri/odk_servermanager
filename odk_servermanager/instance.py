@@ -188,6 +188,8 @@ class ServerInstance:
         self._link_keys()
         # compile the bat
         self._compile_bat_file()
+        # compile the config file
+        self._compile_config_file()
 
 
 class DuplicateServerName(Exception):

@@ -243,6 +243,7 @@ class TestOurTestServerInstance(ODKSMTest):
         assert len(listdir(keys_folder)) == 0
 
 
+@pytest.mark.runthis
 class TestServerInstanceInit(ODKSMTest):
     """Test: ServerInstance init..."""
 
@@ -272,7 +273,8 @@ class TestServerInstanceInit(ODKSMTest):
                 spy(self.instance._prepare_server_core) as request.cls.prepare_server_fun, \
                 spy(self.instance._init_mods) as request.cls.init_mods_fun, \
                 spy(self.instance._link_keys) as request.cls.init_keys_fun, \
-                spy(self.instance._compile_bat_file) as request.cls.compiled_bat_fun:
+                spy(self.instance._compile_bat_file) as request.cls.compiled_bat_fun, \
+                spy(self.instance._compile_config_file) as request.cls.compiled_config_fun:
             self.instance.init()
 
     def test_should_create_the_folder_if_needed(self):
@@ -306,6 +308,11 @@ class TestServerInstanceInit(ODKSMTest):
         """Server instance init should generate the bat file."""
         self.compiled_bat_fun.assert_called()
         assert isfile(join(self.instance_folder, "run_server.bat"))
+
+    def test_should_generate_the_config_file(self):
+        """Server instance init should generate the config file."""
+        self.compiled_config_fun.assert_called()
+        assert isfile(join(self.instance_folder, self.instance.S.bat_settings.server_config))
 
 
 class TestAnInstanceWithANonExistingMod(ODKSMTest):
