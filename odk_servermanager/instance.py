@@ -1,5 +1,5 @@
 import shutil
-from os import mkdir, listdir, unlink
+from os import mkdir, listdir, unlink, remove
 from os.path import isdir, islink, join, splitext, isfile, abspath
 from typing import List
 
@@ -190,7 +190,7 @@ class ServerInstance:
             if "@" + mod not in mods_folders_name:
                 raise ModNotFound("Could not find a mod named {}".format(mod))
 
-    def init(self):
+    def init(self) -> None:
         """Create the new instance folder, filled with everything needed to start it."""
         # check mods folder
         self._check_mods_folders()
@@ -264,6 +264,33 @@ class ServerInstance:
         self._update_mods(self.S.user_mods_list)
         self._update_mods(self.S.server_mods_list)
         self._symlink_warning_folder()
+
+    def _clear_keys(self) -> None:
+        """Clear all keys from the keys folder except the arma ones."""
+        keys_dir = join(self.get_server_instance_path(), self.keys_folder_name)
+        for key in listdir(keys_dir):
+            key_file = join(keys_dir, key)
+            if key not in self.arma_keys and self._is_keyfile(key_file):
+                if islink(key_file):
+                    unlink(key_file)
+                else:
+                    remove(key_file)
+
+    def _update_keys(self) -> None:
+        """Reset the keys and relink them."""
+        self._clear_keys()
+        self._link_keys()
+
+    def _clear_compiled_files(self) -> None:
+        """Delete all compiled files."""
+        for file in ["run_server.bat", self.S.bat_settings.server_config]:
+            remove(join(self.get_server_instance_path(), file))
+
+    def _update_compiled_files(self) -> None:
+        """Delete and regenerate all compiled files"""
+        self._clear_compiled_files()
+        self._compile_bat_file()
+        self._compile_config_file()
 
 
 class DuplicateServerName(Exception):

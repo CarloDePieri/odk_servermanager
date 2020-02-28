@@ -1,7 +1,7 @@
 import pytest
 
 from conftest import test_preset_file_name
-from manager import ServerManager
+from odk_servermanager.manager import ServerManager
 from odksm_test import ODKSMTest
 
 

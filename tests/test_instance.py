@@ -107,14 +107,14 @@ class TestWhenBatComposingTheServerInstance(ODKSMTest):
 class TestOurTestServerInstance(ODKSMTest):
     """Test: our test server instance..."""
 
-    @pytest.fixture(scope="class", autouse=True)
-    def setup(self, request, c_sc_stub, c_sb_stub):
+    @pytest.fixture(autouse=True)
+    def setup(self, request, sc_stub, sb_stub):
         """TestOurTestServerInstance setup"""
         server_name = "TestServer0"
         mods_to_be_copied = ["CBA_A3"]
         request.cls.test_path = test_folder_structure_path()
-        request.cls.sb = c_sb_stub
-        request.cls.sc = c_sc_stub
+        request.cls.sb = sb_stub
+        request.cls.sc = sc_stub
         request.cls.settings = ServerInstanceSettings(
             server_name,
             self.sb, self.sc,
@@ -316,6 +316,53 @@ class TestOurTestServerInstance(ODKSMTest):
         assert isdir(join(copied_mods_folder, "@ODKAI"))  # newly added mod folder gets added
         assert not islink(join(linked_mods_folder, "@ODKAI"))  # no more linked
         assert islink(join(linked_mods_folder, "@ODKMIN"))
+
+    def test_should_be_able_to_clean_the_keys_folder(self, reset_folder_structure):
+        """Our test server instance should be able to clean the keys folder."""
+        self.instance._prepare_server_core()
+        self.instance.S.user_mods_list = ["ace", "AdvProp", "ODKAI"]
+        self.instance._init_mods(self.instance.S.user_mods_list)
+        self.instance._link_keys()
+        self.instance._clear_keys()
+        keys = listdir(join(self.instance.get_server_instance_path(), self.instance.keys_folder_name))
+        assert keys == self.instance.arma_keys
+
+    def test_should_be_able_to_update_keys(self, reset_folder_structure):
+        """Our test server instance should be able to update keys."""
+        self.instance._prepare_server_core()
+        self.instance.S.user_mods_list = ["ace", "AdvProp", "ODKAI"]
+        self.instance._init_mods(self.instance.S.user_mods_list)
+        self.instance._link_keys()
+        self.instance.S.user_mods_list = ["ODKAI"]
+        self.instance._update_all_mods()
+        with spy(self.instance._clear_keys) as clear_keys_fun, spy(self.instance._link_keys) as link_keys_fun:
+            self.instance._update_keys()
+        clear_keys_fun.assert_called()
+        link_keys_fun.assert_called()
+        keys = listdir(join(self.instance.get_server_instance_path(), self.instance.keys_folder_name))
+        assert len(keys) == len(self.instance.arma_keys) + 1
+
+    def test_should_be_able_to_clear_the_compiled_files(self, reset_folder_structure):
+        """Our test server instance should be able to clear the compiled files."""
+        self.instance._prepare_server_core()
+        self.instance._compile_bat_file()
+        self.instance._compile_config_file()
+        self.instance._clear_compiled_files()
+        assert not isfile(join(self.instance.get_server_instance_path(), "run_server.bat"))
+        assert not isfile(join(self.instance.get_server_instance_path(), self.instance.S.bat_settings.server_config))
+
+    def test_should_be_able_to_update_compiled_files(self, reset_folder_structure):
+        """Our test server instance should be able to update compiled files."""
+        self.instance._prepare_server_core()
+        self.instance._compile_bat_file()
+        self.instance._compile_config_file()
+        with spy(self.instance._clear_compiled_files) as clear_files_fun, \
+                spy(self.instance._compile_bat_file) as compile_bat_fun, \
+                spy(self.instance._compile_config_file) as compile_config_fun:
+            self.instance._update_compiled_files()
+        clear_files_fun.assert_called()
+        compile_bat_fun.assert_called()
+        compile_config_fun.assert_called()
 
 
 class TestServerInstanceInit(ODKSMTest):
