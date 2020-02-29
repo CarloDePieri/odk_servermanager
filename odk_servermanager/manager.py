@@ -4,7 +4,7 @@ import reusables
 from box import ConfigBox
 from bs4 import BeautifulSoup
 
-from odk_servermanager.instance import ServerInstance
+from odk_servermanager.instance import ServerInstance, ModNotFound
 from odk_servermanager.settings import ServerBatSettings, ServerConfigSettings, ServerInstanceSettings
 
 
@@ -21,20 +21,23 @@ class ServerManager:
         self._recover_settings()
         self.instance = ServerInstance(self.settings)
         name = self.instance.S.server_instance_name
-        if not self.instance.is_folder_instance_already_there():
-            print("Starting server instance INIT for {}!".format(name))
-            self.instance.init()
-        else:
-            question = "WARNING! A server instance called {} seems already present.\nContinuing will mean UPDATING " \
-                       "the existing server instance. Be sure to understand everything this entails.\n" \
-                       "Do you want to continue? (y/n) ".format(name)
-            answer = input(question)
-            if answer.lower() == "y" or answer.lower() == "yes":
-                print("Alright! Starting server instance UPDATE for {}!".format(name))
-                self.instance.update()
+        try:
+            if not self.instance.is_folder_instance_already_there():
+                print("Starting server instance INIT for {}!".format(name))
+                self.instance.init()
             else:
-                print("Ok! BYE!")
-                return
+                question = "WARNING! A server instance called {} seems already present.\nContinuing will mean UPDATING " \
+                           "the existing server instance. Be sure to understand everything this entails.\n" \
+                           "Do you want to continue? (y/n) ".format(name)
+                answer = input(question)
+                if answer.lower() == "y" or answer.lower() == "yes":
+                    print("Alright! Starting server instance UPDATE for {}!".format(name))
+                    self.instance.update()
+                else:
+                    print("Ok! BYE!")
+                    return
+        except ModNotFound as err:
+            print(">>> Error while loading mods: {}".format(err.args[0]))
 
     def _recover_settings(self):
         """Recover all needed settings, including mods presets."""

@@ -3,10 +3,11 @@ from typing import Dict
 
 import pytest
 
-from conftest import test_preset_file_name, test_resources
+from conftest import test_preset_file_name, test_resources, test_folder_structure_path
 from odk_servermanager.manager import ServerManager
 from odk_servermanager.settings import ServerInstanceSettings, ServerBatSettings, ServerConfigSettings
 from odksm_test import ODKSMTest
+from utils import rmtree
 
 
 class TestPresetImporting(ODKSMTest):
@@ -57,7 +58,6 @@ class TestThePresetManager:
         assert len(sm.settings.user_mods_list) == 5
 
 
-@pytest.mark.runthis
 class TestAServerManagerAtInit(ODKSMTest):
     """Test: A Server Manager at Init..."""
 
@@ -88,3 +88,9 @@ class TestAServerManagerAtInit(ODKSMTest):
         self.sm.manage_instance()
         answer.assert_called()
         update.assert_not_called()
+
+    def test_should_stop_with_non_existing_mod(self, reset_folder_structure):
+        """A server manager at init should stop with non existing mod."""
+        rmtree(join(test_folder_structure_path(), "!Workshop", "@CBA_A3"))
+        # this will fail if the error is not catched
+        self.sm.manage_instance()
