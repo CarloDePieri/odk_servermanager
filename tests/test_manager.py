@@ -47,6 +47,7 @@ class TestThePresetManager:
         assert sm.settings.bat_settings.server_title == "TEST SERVER"
         assert sm.settings.config_settings.password == "p4ssw0rd"
         assert sm.settings.mod_fix_settings["cba_settings"] == "tests/resources/server.cfg"
+        assert len(sm.settings.skip_keys) == 1  # this check that empty list field in config don't pollute the list
 
     def test_should_read_the_config_and_parse_the_preset_if_present_at_init(self):
         """The preset manager should read the config and parse the preset if present at init."""

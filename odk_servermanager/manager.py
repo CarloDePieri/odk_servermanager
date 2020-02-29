@@ -54,7 +54,8 @@ class ServerManager:
         # fix list element in odksm settings
         for el in ["user_mods_list", "mods_to_be_copied", "server_mods_list", "skip_keys"]:
             if el in settings.ODKSM:
-                settings.ODKSM[el] = settings.ODKSM.list(el)
+                el_list = settings.ODKSM.list(el)
+                settings.ODKSM[el] = list(filter(lambda x: x != "", el_list))
         # check for mod_fix
         if "mod_fix_settings" in settings:
             settings.ODKSM.mod_fix_settings = settings.mod_fix_settings.to_dict()
