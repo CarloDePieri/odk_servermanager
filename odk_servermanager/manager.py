@@ -26,7 +26,7 @@ class ServerManager:
             self.instance.init()
         else:
             question = "WARNING! A server instance called {} seems already present.\nContinuing will mean UPDATING " \
-                       "the existing server instance. Be sure to understand everything this entails. " \
+                       "the existing server instance. Be sure to understand everything this entails.\n" \
                        "Do you want to continue? (y/n) ".format(name)
             answer = input(question)
             if answer.lower() == "y" or answer.lower() == "yes":
