@@ -6,3 +6,4 @@ class ODKSMTest:
     manager: ServerManager
     instance: ServerInstance
     settings: ServerInstanceSettings
+    sm: ServerManager

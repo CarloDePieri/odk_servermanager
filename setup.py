@@ -2,16 +2,17 @@ from setuptools import setup
 
 setup(
         name='odk_servermanager',
-        version='0.1',
+        version='0.9',
         packages=['odk_servermanager'],
         include_package_data=True,
         license='GPLv3',
         author='Carlo De Pieri',
-        description='ODKclan tool to manage its Arma 3 server instances.',
+        description='ODK Clan tool to manage its Arma 3 server instances.',
         install_requires=[
             'beautifulsoup4>=4.8.2',
             'Jinja2>=2.11.1',
-            'python-box>=4.0.4'
+            'python-box>=4.0.4',
+            "reusables>=0.9.5"
             ],
         extras_require={
             'dev': [

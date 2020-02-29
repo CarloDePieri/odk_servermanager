@@ -32,3 +32,4 @@ class ServerInstanceSettings:
     server_mods_list: List[str]
     skip_keys: List[str]
     mod_fix_settings: Dict[str, str]
+    user_mods_preset: str

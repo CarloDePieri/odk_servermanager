@@ -24,11 +24,14 @@ class ServerInstance:
         """Return the server instance path."""
         return join(self.S.server_instance_root, self.S.server_instance_prefix + self.S.server_instance_name)
 
+    def is_folder_instance_already_there(self) -> bool:
+        """Check if the folder instance is already present."""
+        return isdir(self.get_server_instance_path())
+
     def _new_server_folder(self) -> None:
         """Create a new server folder."""
-        server_folder = self.get_server_instance_path()
-        if not isdir(server_folder):
-            mkdir(server_folder)
+        if not self.is_folder_instance_already_there():
+            mkdir(self.get_server_instance_path())
         else:
             raise DuplicateServerName()
 
