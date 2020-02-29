@@ -7,7 +7,7 @@ from conftest import test_preset_file_name, test_resources, test_folder_structur
 from odk_servermanager.manager import ServerManager
 from odk_servermanager.settings import ServerInstanceSettings, ServerBatSettings, ServerConfigSettings
 from odksm_test import ODKSMTest
-from utils import rmtree
+from odk_servermanager.utils import rmtree
 
 
 class TestPresetImporting(ODKSMTest):
