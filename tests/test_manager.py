@@ -69,7 +69,7 @@ class TestAServerManagerAtInit(ODKSMTest):
     def test_should_init_the_server_instance(self, reset_folder_structure):
         """A server manager at init should init the server instance."""
         self.sm.manage_instance()
-        assert isfile(join(self.sm.instance.get_server_instance_path(), self.sm.settings.bat_settings.server_config))
+        assert isfile(join(self.sm.instance.get_server_instance_path(), self.sm.settings.bat_settings.server_config_file_name))
 
     def test_should_ask_confirmation_before_update_if_called_twice(self, reset_folder_structure, mocker):
         """A server manager at init should ask confirmation before update if called twice."""

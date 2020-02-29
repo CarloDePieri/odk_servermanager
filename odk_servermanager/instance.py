@@ -37,7 +37,7 @@ class ServerInstance:
 
     def _filter_symlinks(self, element: str) -> bool:
         """Filter out certain directory that won't be symlinked."""
-        not_to_be_symlinked = ["!Workshop", self.keys_folder_name, "run_server.bat", self.S.bat_settings.server_config,
+        not_to_be_symlinked = ["!Workshop", self.keys_folder_name, "run_server.bat", self.S.bat_settings.server_config_file_name,
                                "__odksm__"]
         return not (element.startswith(self.S.server_instance_prefix) or element in not_to_be_symlinked)
 
@@ -148,7 +148,7 @@ class ServerInstance:
         """Compile an instance specific cfg file that will be passed as -config flag to the server."""
         # recover template file and prepare composed bat file path
         template_file_content = self._read_resource_file('templates/server_cfg_template.txt')
-        compiled_config_path = join(self.get_server_instance_path(), self.S.bat_settings.server_config)
+        compiled_config_path = join(self.get_server_instance_path(), self.S.bat_settings.server_config_file_name)
         # prepare settings
         settings = self.S.config_settings.to_dict()
         # compose and save the bat
@@ -286,7 +286,7 @@ class ServerInstance:
 
     def _clear_compiled_files(self) -> None:
         """Delete all compiled files."""
-        for file in ["run_server.bat", self.S.bat_settings.server_config]:
+        for file in ["run_server.bat", self.S.bat_settings.server_config_file_name]:
             remove(join(self.get_server_instance_path(), file))
 
     def _update_compiled_files(self) -> None:

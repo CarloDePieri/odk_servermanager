@@ -11,8 +11,8 @@ class ServerConfigSettings:
 class ServerBatSettings:
     server_title: str
     server_port: str
-    server_config: str
-    server_cfg: str
+    server_config_file_name: str
+    server_cfg_file_name: str
     server_max_mem: str
     server_flags: str
 

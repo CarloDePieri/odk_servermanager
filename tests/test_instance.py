@@ -45,7 +45,7 @@ class TestWhenConfigComposingTheServerInstance(ODKSMTest):
         request.cls.instance = ServerInstance(self.settings)
         self.instance._compile_config_file()
         request.cls.compiled_config = join(self.instance.get_server_instance_path(),
-                                           self.instance.S.bat_settings.server_config)
+                                           self.instance.S.bat_settings.server_config_file_name)
 
     def test_should_create_the_file(self):
         """When config composing the server instance should create the file."""
@@ -68,7 +68,7 @@ class TestWhenBatComposingTheServerInstance(ODKSMTest):
         request.cls.test_path = test_folder_structure_path()
         server_instance_name = "TestServer0"
         sb = ServerBatSettings(server_title="ODK Training Server", server_port="2202",
-                               server_config="serverTraining.cfg", server_cfg="Arma3Training.cfg",
+                               server_config_file_name="serverTraining.cfg", server_cfg_file_name="Arma3Training.cfg",
                                server_max_mem="8192", server_flags="-filePatching -autoinit -enableHT")
         sc = c_sc_stub
         request.cls.settings = ServerInstanceSettings(
@@ -175,10 +175,10 @@ class TestOurTestServerInstance(ODKSMTest):
         self.instance._prepare_server_core()
         assert not islink(join(server_folder, "run_server.bat"))
 
-    def test_should_protect_server_config(self, reset_folder_structure):
-        """Our test server instance should protect server.config."""
+    def test_should_protect_server_config_file_name(self, reset_folder_structure):
+        """Our test server instance should protect server_config_file_name."""
         server_folder = join(self.test_path, "__server__" + self.instance.S.server_instance_name)
-        name = self.instance.S.bat_settings.server_config
+        name = self.instance.S.bat_settings.server_config_file_name
         with open(join(self.test_path, name), "w+") as f:
             f.write("protected")
         self.instance._prepare_server_core()
@@ -351,7 +351,7 @@ class TestOurTestServerInstance(ODKSMTest):
         self.instance._compile_config_file()
         self.instance._clear_compiled_files()
         assert not isfile(join(self.instance.get_server_instance_path(), "run_server.bat"))
-        assert not isfile(join(self.instance.get_server_instance_path(), self.instance.S.bat_settings.server_config))
+        assert not isfile(join(self.instance.get_server_instance_path(), self.instance.S.bat_settings.server_config_file_name))
 
     def test_should_be_able_to_update_compiled_files(self, reset_folder_structure):
         """Our test server instance should be able to update compiled files."""
@@ -392,7 +392,7 @@ class TestServerInstanceInit(ODKSMTest):
         server_name = "TestServer1"
         request.cls.test_path = test_folder_structure_path()
         sb = ServerBatSettings(server_title="ODK Training Server", server_port="2202",
-                               server_config="serverTraining.cfg", server_cfg="Arma3Training.cfg",
+                               server_config_file_name="serverTraining.cfg", server_cfg_file_name="Arma3Training.cfg",
                                server_max_mem="8192", server_flags="-filePatching -autoinit -enableHT")
         sc = c_sc_stub
         request.cls.settings = ServerInstanceSettings(
@@ -451,7 +451,7 @@ class TestServerInstanceInit(ODKSMTest):
     def test_should_generate_the_config_file(self):
         """Server instance init should generate the config file."""
         self.compiled_config_fun.assert_called()
-        assert isfile(join(self.instance_folder, self.instance.S.bat_settings.server_config))
+        assert isfile(join(self.instance_folder, self.instance.S.bat_settings.server_config_file_name))
 
 
 class TestAnInstanceWithANonExistingMod(ODKSMTest):

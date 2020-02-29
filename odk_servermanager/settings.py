@@ -14,7 +14,7 @@ class ServerConfigSettings(Box):
     :hostname: The server instance name
     :password: The user password for accessing the server
     :password_admin: The password admin uses to manage the server
-    :template: Filename of pbo in MPMissions folder"""
+    :mission_template: Filename of pbo in MPMissions folder"""
 
     def __init__(self, hostname: str, password: str, password_admin: str, mission_template: str, **kwargs):
         super(Box, self).__init__(hostname=hostname, password=password, password_admin=password_admin,
@@ -29,8 +29,8 @@ class ServerBatSettings(Box):
     ---------------
     :server_title: The server instance name that will appear in the monitoring tool
     :server_port: The port the server is running on
-    :server_config: The path to the config file
-    :server_cfg: The path to the cfg file
+    :server_config_file_name: The name of the config file, located in the instance folder
+    :server_cfg_file_name: The name of the cfg file, located in the instance folder
     :server_max_mem: The max memory that the server will be able to allocate
 
     OPTIONAL FIELDS
@@ -38,10 +38,11 @@ class ServerBatSettings(Box):
     :server_flags: Default to empty, any addition flag to be passed to the server
     """
 
-    def __init__(self, server_title: str, server_port: str, server_config: str, server_cfg: str,
+    def __init__(self, server_title: str, server_port: str, server_config_file_name: str, server_cfg_file_name: str,
                  server_max_mem: str, server_flags: str = "", **kwargs):
         super(Box, self).__init__(server_title=server_title, server_port=server_port,
-                                  server_config=server_config, server_cfg=server_cfg, server_max_mem=server_max_mem,
+                                  server_config_file_name=server_config_file_name,
+                                  server_cfg_file_name=server_cfg_file_name, server_max_mem=server_max_mem,
                                   server_flags=server_flags, **kwargs)
 
 
