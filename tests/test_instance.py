@@ -142,10 +142,12 @@ class TestOurTestServerInstance(ODKSMTest):
     def test_should_symlink_and_create_all_needed_stuff_from_the_main_folder(self, reset_folder_structure):
         """Create instance should symlink and create all needed stuff from the main folder."""
         server_folder = join(self.test_path, "__server__" + self.instance.S.server_instance_name)
+        mkdir(join(self.test_path, "__odksm__"))
         self.instance._prepare_server_core()
         # Check that it didn't copy over the wrong stuff
         assert not isdir(join(server_folder, "!Workshop"))
         assert not isdir(join(server_folder, "__server__TestServer0"))
+        assert not islink(join(server_folder, "__odksm__"))
         # Check all symlink
         assert islink(join(server_folder, "TestFolder1"))
         assert islink(join(server_folder, "TestFolder2"))
