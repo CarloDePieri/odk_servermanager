@@ -58,7 +58,7 @@ class ServerInstanceSettings(Box):
     OPTIONAL FIELDS
     ---------------
     :arma_folder: The folder that contains the game, default to the steam default folder
-    :mods_to_be_copied: mods from this list will be copied, not linked
+    :mods_to_be_copied: a user or server mod that is also in this list will be copied instead of linked
     :linked_mod_folder_name: the name of the linked mod folder
     :copied_mod_folder_name: the name of the copied mod folder
     :server_instance_prefix: every instance folder name will be prefixed by this

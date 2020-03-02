@@ -22,9 +22,11 @@ class ServerManager:
         try:
             self._recover_settings()
             self.instance = ServerInstance(self.settings)
-        except Exception:
-            self._ui_abort("\n [ERR] Error while loading the configuration file.\n Something was wrong in the odksm "
-                           "config file or in the Arma 3 mod preset.\n Check the documentation in the wiki, in the "
+        except Exception as err:
+            print("\n [ERR] Error while loading the configuration file.\n Something was wrong in the odksm "
+                  "config file or in the Arma 3 mod preset.\n")
+            print(" {}".format(err))
+            self._ui_abort("\n Check the documentation in the wiki, in the "
                            "README.md or in the odksm_servermanager/settings.py.\n Bye!\n")
         try:
             print("\n Loaded config file: {}\n Instance name: {}"
