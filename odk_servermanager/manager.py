@@ -17,27 +17,62 @@ class ServerManager:
         self.config_file = config_file
 
     def manage_instance(self):
-        """Offer a basic gui so that the user can distinguish between instance's init and update."""
-        self._recover_settings()
-        self.instance = ServerInstance(self.settings)
-        name = self.instance.S.server_instance_name
+        """Offer a basic ui so that the user can distinguish between instance's init and update."""
+        print("\n ======[ WELCOME TO ODKSM! ]======\n")
         try:
+            self._recover_settings()
+            self.instance = ServerInstance(self.settings)
+        except Exception:
+            self._ui_abort("\n [ERR] Error while loading the configuration file.\n Something was wrong in the odksm "
+                           "config file or in the Arma 3 mod preset.\n Check the documentation in the wiki, in the "
+                           "README.md or in the odksm_servermanager/settings.py.\n Bye!\n")
+        try:
+            print("\n Loaded config file: {}\n Instance name: {}"
+                  "\n Server title: {}\n".format(self.config_file, self.instance.S.server_instance_name,
+                                                 self.instance.S.config_settings.hostname))
             if not self.instance.is_folder_instance_already_there():
-                print("Starting server instance INIT for {}!".format(name))
-                self.instance.init()
+                self._ui_init()
             else:
-                question = "WARNING! A server instance called {} seems already present.\nContinuing will mean UPDATING " \
-                           "the existing server instance. Be sure to understand everything this entails.\n" \
-                           "Do you want to continue? (y/n) ".format(name)
-                answer = input(question)
-                if answer.lower() == "y" or answer.lower() == "yes":
-                    print("Alright! Starting server instance UPDATE for {}!".format(name))
-                    self.instance.update()
-                else:
-                    print("Ok! BYE!")
-                    return
+                self._ui_update()
         except ModNotFound as err:
-            print(">>> Error while loading mods: {}".format(err.args[0]))
+            self._ui_abort("\n [ERR] Error while loading mods: {}\n".format(err.args[0]))
+        except Exception:
+            self._ui_abort("\n [ERR] Generic error. Please take notes on what you were doing and contact odksm team "
+                           "on github!\n Bye!\n")
+
+    def _ui_init(self):
+        """UI to init an instance."""
+        user_answer = input(" Do you want to continue? (y/n) ")
+        if self._is_positive_answer(user_answer):
+            print(" Starting server instance INIT for {}!".format(self.instance.S.server_instance_name))
+            self.instance.init()
+            print("\n [OK] Init done! Bye!\n")
+        else:
+            self._ui_abort()
+
+    def _ui_update(self):
+        """UI to update an instance."""
+        name = self.instance.S.server_instance_name
+        answer = input(" [WARNING] A server instance called {} seems already present.\n Continuing will "
+                       "UPDATE the existing server instance. Be sure to understand everything this entails.\n\n"
+                       " Do you want to continue? (y/n) ".format(name))
+        if self._is_positive_answer(answer):
+            print(" Alright! Starting server instance UPDATE for {}!".format(name))
+            self.instance.update()
+            print("\n [OK] Update done! Bye!\n\n")
+        else:
+            self._ui_abort()
+
+    @staticmethod
+    def _ui_abort(message: str = "\n [ABORTED] Bye!\n") -> None:
+        """Print the given message and quit the program."""
+        print(message)
+        exit(1)
+
+    @staticmethod
+    def _is_positive_answer(answer: str) -> bool:
+        """Parse the answer and return True if positive."""
+        return answer.lower() == "y" or answer.lower() == "yes"
 
     def _recover_settings(self):
         """Recover all needed settings, including mods presets."""

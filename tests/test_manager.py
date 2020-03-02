@@ -58,6 +58,7 @@ class TestThePresetManager:
         assert len(sm.settings.user_mods_list) == 5
 
 
+@pytest.mark.runthis
 class TestAServerManagerAtInit(ODKSMTest):
     """Test: A Server Manager at Init..."""
 
@@ -66,15 +67,29 @@ class TestAServerManagerAtInit(ODKSMTest):
         """TestAServerManagerAtInit setup"""
         request.cls.sm = ServerManager(join(test_resources, "config.ini"))
 
-    def test_should_init_the_server_instance(self, reset_folder_structure):
+    def test_should_init_the_server_instance(self, reset_folder_structure, mocker):
         """A server manager at init should init the server instance."""
+        answer = mocker.patch("builtins.input", return_value="y")  # this skips the user input check
         self.sm.manage_instance()
+        answer.assert_called()
         assert isfile(join(self.sm.instance.get_server_instance_path(), self.sm.settings.bat_settings.server_config_file_name))
+
+    def test_should_quit_if_not_confirmed_at_init(self, reset_folder_structure, mocker):
+        """A server manager at init should quit if not confirmed at init."""
+        answer = mocker.patch("builtins.input", return_value="n")  # this fails the user input check
+        abort = mocker.patch("odk_servermanager.manager.ServerManager._ui_abort", side_effect=self.sm._ui_abort)
+        with pytest.raises(SystemExit):
+            self.sm.manage_instance()
+        answer.assert_called()
+        abort.assert_called()
 
     def test_should_ask_confirmation_before_update_if_called_twice(self, reset_folder_structure, mocker):
         """A server manager at init should ask confirmation before update if called twice."""
+        # setup
+        mocker.patch("builtins.input", return_value="y")  # this skips the user input check
         self.sm.manage_instance()
-        answer = mocker.patch("builtins.input", return_value="y")
+        # end setup
+        answer = mocker.patch("builtins.input", return_value="y")  # this skips the user input check
         update = mocker.patch("odk_servermanager.instance.ServerInstance.update", side_effect=self.sm.instance.update)
         self.sm.manage_instance()
         answer.assert_called()
@@ -82,15 +97,32 @@ class TestAServerManagerAtInit(ODKSMTest):
 
     def test_should_stop_when_updating_if_its_told_to_do_so(self, reset_folder_structure, mocker):
         """A server manager at init should stop when updating if its told to do so."""
+        # setup
+        mocker.patch("builtins.input", return_value="y")  # this skips the user input check
         self.sm.manage_instance()
+        # end setup
         answer = mocker.patch("builtins.input", return_value="n")
         update = mocker.patch("odk_servermanager.instance.ServerInstance.update", side_effect=self.sm.instance.update)
-        self.sm.manage_instance()
+        abort = mocker.patch("odk_servermanager.manager.ServerManager._ui_abort", side_effect=self.sm._ui_abort)
+        with pytest.raises(SystemExit):
+            self.sm.manage_instance()
         answer.assert_called()
         update.assert_not_called()
+        abort.assert_called()
 
-    def test_should_stop_with_non_existing_mod(self, reset_folder_structure):
+    def test_should_stop_with_non_existing_mod(self, reset_folder_structure, mocker):
         """A server manager at init should stop with non existing mod."""
         rmtree(join(test_folder_structure_path(), "!Workshop", "@CBA_A3"))
-        # this will fail if the error is not catched
-        self.sm.manage_instance()
+        abort = mocker.patch("odk_servermanager.manager.ServerManager._ui_abort", side_effect=self.sm._ui_abort)
+        mocker.patch("builtins.input", return_value="y")  # this skips the user input check
+        with pytest.raises(SystemExit):
+            self.sm.manage_instance()
+        abort.assert_called()
+
+    def test_should_check_the_config_file(self, reset_folder_structure, mocker):
+        """A server manager at init should check the config file."""
+        sm = ServerManager(join(test_folder_structure_path(), "template.txt"))
+        abort = mocker.patch("odk_servermanager.manager.ServerManager._ui_abort", side_effect=self.sm._ui_abort)
+        with pytest.raises(SystemExit):
+            sm.manage_instance()
+        abort.assert_called()
