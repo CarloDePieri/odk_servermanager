@@ -23,8 +23,9 @@ def clean(c):
 
 
 @task
-def test(c):
-    c.run("pipenv run pytest -s {}".format(TEST_FOLDER))
+def test(c, s=False):
+    s_string = " -s " if s else " "
+    c.run("pipenv run pytest{}{}".format(s_string, TEST_FOLDER))
 
 
 @task
