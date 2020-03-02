@@ -23,11 +23,10 @@ class ServerManager:
             self._recover_settings()
             self.instance = ServerInstance(self.settings)
         except Exception as err:
-            print("\n [ERR] Error while loading the configuration file.\n Something was wrong in the odksm "
-                  "config file or in the Arma 3 mod preset.\n")
-            print(" {}".format(err))
-            self._ui_abort("\n Check the documentation in the wiki, in the "
-                           "README.md or in the odksm_servermanager/settings.py.\n Bye!\n")
+            self._ui_abort("\n [ERR] Error while loading the configuration file.\n Something was wrong in the odksm "
+                           "config file or in the Arma 3 mod preset.\n\n {}\n\n "
+                           "Check the documentation in the wiki, in the README.md or in the "
+                           "odksm_servermanager/settings.py.\n Bye!\n".format(err))
         try:
             print("\n Loaded config file: {}\n Instance name: {}"
                   "\n Server title: {}\n".format(self.config_file, self.instance.S.server_instance_name,
@@ -38,9 +37,9 @@ class ServerManager:
                 self._ui_update()
         except ModNotFound as err:
             self._ui_abort("\n [ERR] Error while loading mods: {}\n".format(err.args[0]))
-        except Exception:
-            self._ui_abort("\n [ERR] Generic error. Please take notes on what you were doing and contact odksm team "
-                           "on github!\n Bye!\n")
+        except Exception as err:
+            self._ui_abort("\n [ERR] Generic error.\n\n {}\n\n Please take notes on what you were doing and contact "
+                           "odksm team on github!\n Bye!\n".format(err))
 
     def _ui_init(self):
         """UI to init an instance."""

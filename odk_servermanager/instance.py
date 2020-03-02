@@ -177,7 +177,9 @@ class ServerInstance:
                 key_file = list(filter(lambda x: self._is_keyfile(join(mod_key_folder, x)), listdir(mod_key_folder)))[0]
                 src = join(mod_key_folder, key_file)
                 dest = join(self.get_server_instance_path(), self.keys_folder_name, key_file)
-                symlink(src, dest)
+                # check if the key is already there
+                if not islink(dest):
+                    symlink(src, dest)
 
     def _link_keys(self) -> None:
         """Link all keys from the copied and the linked mod folders to the instance keys folder."""

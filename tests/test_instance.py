@@ -230,6 +230,18 @@ class TestOurTestServerInstance(ODKSMTest):
         assert len(keys_folder_files) == len(self.instance.S.user_mods_list) + len(
             self.instance.S.server_mods_list) + len(self.instance.arma_keys)
 
+    def test_should_skip_a_key_already_present_when_linking_them(self, reset_folder_structure):
+        """Our test server instance should skip a key already present when linking them."""
+        # THIS TEST DEPENDS ON _prepare_server_core AND _init_mods ... would be too long to set up otherwise
+        user_mods_list = ["3CB BAF Equipment", "3CB BAF Equipment (comp)"]
+        self.instance.S.user_mods_list = user_mods_list
+        self.instance._prepare_server_core()
+        self.instance._init_mods(user_mods_list)
+        keys_folder = join(self.instance.get_server_instance_path(), self.instance.keys_folder_name)
+        # end setup, begin actual test
+        # this will fail if not handled correctly
+        self.instance._link_keys()
+
     def test_should_simply_skip_mods_without_keys_when_linking_keys(self, reset_folder_structure):
         """Our test server instance should simply skip mods without keys when linking keys."""
         copied_mods = join(self.instance.get_server_instance_path(), "!Mods_copied")

@@ -58,7 +58,6 @@ class TestThePresetManager:
         assert len(sm.settings.user_mods_list) == 5
 
 
-@pytest.mark.runthis
 class TestAServerManagerAtInit(ODKSMTest):
     """Test: A Server Manager at Init..."""
 
