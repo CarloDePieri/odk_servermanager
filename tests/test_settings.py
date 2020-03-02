@@ -81,7 +81,7 @@ class TestAServerInstanceSettings:
         server_instance_name = "training"
         si = ServerInstanceSettings(server_instance_name=server_instance_name,
                                     bat_settings=self.sb, config_settings=self.sc)
-        assert si.arma_folder == r"C:\Program Files\Steam\steamapps\common\Arma 3"
+        assert si.arma_folder == r"C:\Program Files (x86)\Steam\steamapps\common\Arma 3"
         assert si.mods_to_be_copied == []
         assert si.linked_mod_folder_name == "!Mods_linked"
         assert si.copied_mod_folder_name == "!Mods_copied"

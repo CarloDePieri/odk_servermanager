@@ -78,7 +78,7 @@ class ServerInstanceSettings(Box):
                  user_mods_list: List[str] = [], server_mods_list: List[str] = [], skip_keys: List[str] = [],
                  mod_fix_settings: Dict[str, str] = {}, user_mods_preset: str = ""):
         if arma_folder == "":
-            arma_folder = os.path.join(os.getenv("ProgramFiles"), r"Steam\steamapps\common\Arma 3")
+            arma_folder = os.path.join(os.getenv("ProgramFiles(x86)"), r"Steam\steamapps\common\Arma 3")
         if server_instance_root == "":
             server_instance_root = arma_folder
         server_drive = splitdrive(server_instance_root)[0]
