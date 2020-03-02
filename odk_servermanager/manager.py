@@ -45,7 +45,7 @@ class ServerManager:
         """UI to init an instance."""
         user_answer = input(" Do you want to continue? (y/n) ")
         if self._is_positive_answer(user_answer):
-            print(" Starting server instance INIT for {}!".format(self.instance.S.server_instance_name))
+            print("\n > Starting server instance INIT for {}!".format(self.instance.S.server_instance_name))
             self.instance.init()
             self._ui_print_warnings()
             print("\n [OK] Init done! Bye!\n")
@@ -59,7 +59,7 @@ class ServerManager:
                        "UPDATE the existing server instance. Be sure to understand everything this entails.\n\n"
                        " Do you want to continue? (y/n) ".format(name))
         if self._is_positive_answer(answer):
-            print(" Alright! Starting server instance UPDATE for {}!".format(name))
+            print("\n > Starting server instance UPDATE for {}!".format(name))
             self.instance.update()
             self._ui_print_warnings()
             print("\n [OK] Update done! Bye!\n\n")
