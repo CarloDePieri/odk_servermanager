@@ -47,6 +47,7 @@ class ServerManager:
         if self._is_positive_answer(user_answer):
             print(" Starting server instance INIT for {}!".format(self.instance.S.server_instance_name))
             self.instance.init()
+            self._ui_print_warnings()
             print("\n [OK] Init done! Bye!\n")
         else:
             self._ui_abort()
@@ -60,9 +61,17 @@ class ServerManager:
         if self._is_positive_answer(answer):
             print(" Alright! Starting server instance UPDATE for {}!".format(name))
             self.instance.update()
+            self._ui_print_warnings()
             print("\n [OK] Update done! Bye!\n\n")
         else:
             self._ui_abort()
+
+    def _ui_print_warnings(self):
+        """Print warnings if needed."""
+        if len(self.instance.warnings) > 0:
+            print("\n We got some warnings:")
+            for warn in self.instance.warnings:
+                print(" [WARN] {}".format(warn))
 
     @staticmethod
     def _ui_abort(message: str = "\n [ABORTED] Bye!\n") -> None:

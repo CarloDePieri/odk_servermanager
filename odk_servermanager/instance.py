@@ -14,6 +14,7 @@ class ServerInstance:
 
     keys_folder_name = "Keys"
     arma_keys = ["a3.bikey", "a3c.bikey", "gm.bikey"]
+    warnings: List[str] = []
 
     def __init__(self, settings: ServerInstanceSettings):
         self.S = settings
@@ -68,7 +69,11 @@ class ServerInstance:
         workshop_folder = join(self.S.arma_folder, "!Workshop")
         mod_folder = "@" + mod_name
         target_folder = join(server_folder, self.S.linked_mod_folder_name)
-        symlink(join(workshop_folder, mod_folder), join(target_folder, mod_folder))
+        if not islink(join(target_folder, mod_folder)):
+            symlink(join(workshop_folder, mod_folder), join(target_folder, mod_folder))
+        else:
+            self._add_warning("Tried to link the mod '{}' more than once! There's a duplicate "
+                              "somewhere!".format(mod_name))
 
     def _symlink_warning_folder(self) -> None:
         """Symlink the warning folder inside the linked mod folder if needed."""
@@ -91,15 +96,25 @@ class ServerInstance:
         # If available, call its pre hook
         if mod_fix is not None and mod_fix.hook_pre is not None:
             mod_fix.hook_pre(self)
-        # If available, call its replace hook, else simply copy the mod
-        if mod_fix is not None and mod_fix.hook_replace is not None:
-            mod_fix.hook_replace(self)
+        # Now check that the mod is not already copied
+        target_folder = join(server_folder, self.S.copied_mod_folder_name)
+        if not isdir(join(target_folder, mod_folder)):
+            # If available, call its replace hook, else simply copy the mod
+            if mod_fix is not None and mod_fix.hook_replace is not None:
+                mod_fix.hook_replace(self)
+            else:
+                copytree(join(workshop_folder, mod_folder), join(target_folder, mod_folder))
         else:
-            target_folder = join(server_folder, self.S.copied_mod_folder_name)
-            copytree(join(workshop_folder, mod_folder), join(target_folder, mod_folder))
+            self._add_warning("Tried to copy the mod '{}' more than once! There's a duplicate "
+                              "somewhere!".format(mod_name))
         # If available, call its post hook
         if mod_fix is not None and mod_fix.hook_post is not None:
             mod_fix.hook_post(self)
+
+    def _add_warning(self, message: str) -> None:
+        """Add a warning to the warnings list."""
+        if message not in self.warnings:
+            self.warnings.append(message)
 
     def _init_mods(self, mods_list: List[str]) -> None:
         """This will link mods to an instance, copying or symlinking them."""
@@ -255,6 +270,7 @@ class ServerInstance:
                 copied_mods_folder = join(self.get_server_instance_path(), self.S.copied_mod_folder_name)
                 already_there_mods = map(lambda x: x[1:], listdir(copied_mods_folder))
                 if mod in already_there_mods:
+                    # TOIMPROVE find a way to distinguish between duplicates and updates
                     # These are the only ones that get really updated
                     self._update_copied_mod(mod)
                 else:

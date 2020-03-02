@@ -237,7 +237,6 @@ class TestOurTestServerInstance(ODKSMTest):
         self.instance.S.user_mods_list = user_mods_list
         self.instance._prepare_server_core()
         self.instance._init_mods(user_mods_list)
-        keys_folder = join(self.instance.get_server_instance_path(), self.instance.keys_folder_name)
         # end setup, begin actual test
         # this will fail if not handled correctly
         self.instance._link_keys()
@@ -263,6 +262,16 @@ class TestOurTestServerInstance(ODKSMTest):
         mkdir(linked_mods)
         self.instance._symlink_mod("ace")
         assert islink(join(linked_mods, "@ace"))
+
+    def test_should_skip_a_mod_if_already_there(self, reset_folder_structure):
+        """Our test server instance should skip a mod if already there."""
+        user_mods_list = ["3CB BAF Equipment", "3CB BAF Equipment", "ace", "ace"]
+        self.instance.S.user_mods_list = user_mods_list
+        self.instance.S.mods_to_be_copied = ["ace"]
+        self.instance._prepare_server_core()
+        warnings = len(self.instance.warnings)
+        self.instance._init_mods(user_mods_list)
+        assert len(self.instance.warnings) == warnings + 2
 
     def test_should_be_able_to_link_the_warning_folder(self, reset_folder_structure):
         """Our test server instance should be able to link the warning folder."""
