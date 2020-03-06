@@ -6,6 +6,7 @@ class ServerConfigSettings:
     password: str
     password_admin: str
     template: str
+    config_template: str
 
 
 class ServerBatSettings:
@@ -15,6 +16,7 @@ class ServerBatSettings:
     server_cfg_file_name: str
     server_max_mem: str
     server_flags: str
+    bat_template: str
 
 
 class ServerInstanceSettings:

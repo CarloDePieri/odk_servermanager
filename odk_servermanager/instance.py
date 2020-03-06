@@ -148,7 +148,11 @@ class ServerInstance:
     def _compile_bat_file(self) -> None:
         """Compile an instance specific bat file to run the server."""
         # recover template file and prepare composed bat file path
-        template_file_content = self._read_resource_file('templates/run_server_template.txt')
+        if self.S.bat_settings.bat_template == "":
+            template_file_content = self._read_resource_file('templates/run_server_template.txt')
+        else:
+            with open(self.S.bat_settings.bat_template, "r") as template:
+                template_file_content = template.read()
         compiled_bat_path = join(self.get_server_instance_path(), "run_server.bat")
         # prepare settings
         settings = self.S.bat_settings.copy()
@@ -162,7 +166,11 @@ class ServerInstance:
     def _compile_config_file(self) -> None:
         """Compile an instance specific cfg file that will be passed as -config flag to the server."""
         # recover template file and prepare composed bat file path
-        template_file_content = self._read_resource_file('templates/server_cfg_template.txt')
+        if self.S.config_settings.config_template == "":
+            template_file_content = self._read_resource_file('templates/server_cfg_template.txt')
+        else:
+            with open(self.S.config_settings.config_template, "r") as template:
+                template_file_content = template.read()
         compiled_config_path = join(self.get_server_instance_path(), self.S.bat_settings.server_config_file_name)
         # prepare settings
         settings = self.S.config_settings.to_dict()

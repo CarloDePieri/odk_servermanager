@@ -6,7 +6,7 @@ from box import Box
 
 
 class ServerConfigSettings(Box):
-    """Config container for the server.config file.
+    """Config container for the serverConfig.cfg file.
     Other than the required arguments, any additional named arguments will be saved.
 
     REQUIRED FIELDS
@@ -14,11 +14,17 @@ class ServerConfigSettings(Box):
     :hostname: The server instance name that will appear in game
     :password: The user password for accessing the server
     :password_admin: The password admin uses to manage the server
-    :mission_template: Filename of pbo in MPMissions folder"""
+    :mission_template: Filename of pbo in MPMissions folder
 
-    def __init__(self, hostname: str, password: str, password_admin: str, mission_template: str, **kwargs):
+    OPTIONAL FIELDS
+    ---------------
+    :config_template: path of the custom template file for the cfg
+    """
+
+    def __init__(self, hostname: str, password: str, password_admin: str, mission_template: str,
+                 config_template: str = "", **kwargs):
         super(Box, self).__init__(hostname=hostname, password=password, password_admin=password_admin,
-                                  mission_template=mission_template, **kwargs)
+                                  mission_template=mission_template, config_template=config_template, **kwargs)
 
 
 class ServerBatSettings(Box):
@@ -36,14 +42,15 @@ class ServerBatSettings(Box):
     OPTIONAL FIELDS
     ---------------
     :server_flags: Default to empty, any addition flag to be passed to the server
+    :bat_template: path of the custom template file for the bat
     """
 
     def __init__(self, server_title: str, server_port: str, server_config_file_name: str, server_cfg_file_name: str,
-                 server_max_mem: str, server_flags: str = "", **kwargs):
+                 server_max_mem: str, server_flags: str = "", bat_template: str = "", **kwargs):
         super(Box, self).__init__(server_title=server_title, server_port=server_port,
                                   server_config_file_name=server_config_file_name,
                                   server_cfg_file_name=server_cfg_file_name, server_max_mem=server_max_mem,
-                                  server_flags=server_flags, **kwargs)
+                                  server_flags=server_flags, bat_template=bat_template, **kwargs)
 
 
 class ServerInstanceSettings(Box):

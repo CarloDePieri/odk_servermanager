@@ -1,0 +1,5 @@
+{{ server_title }}
+{{ server_port }}
+{{ server_config_file_name }}
+{{ server_cfg_file_name }}
+{{ server_max_mem }}

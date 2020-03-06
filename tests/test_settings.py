@@ -10,18 +10,30 @@ class TestAServerConfigSettings:
         """A server config settings should require certain fields."""
         assert_requires_arguments(ServerConfigSettings, ['hostname', 'password', 'password_admin', 'mission_template'])
 
+    def test_should_have_decent_defaults(self):
+        """A server config settings should have decent defaults."""
+        sc = ServerConfigSettings(
+            hostname="test",
+            password="123",
+            password_admin="456",
+            mission_template="mission.test"
+        )
+        assert sc.config_template == ""
+
     def test_should_accept_additional_field(self):
         """A server config settings should accept additional field."""
         hostname = "HOSTNAME"
         password = "secure"
         password_admin = "verysecure"
         template = "mission.template"
+        my_template = r"c:\myconfig.txt"
         myconfig = "someconfig"
         sc = ServerConfigSettings(
             hostname=hostname,
             password=password,
             password_admin=password_admin,
             mission_template=template,
+            config_template=my_template,
             myconfig=myconfig
         )
         assert sc.hostname == hostname
@@ -29,6 +41,7 @@ class TestAServerConfigSettings:
         assert sc.password_admin == password_admin
         assert sc.mission_template == template
         assert sc.myconfig == myconfig
+        assert sc.config_template == my_template
 
 
 class TestAServerBatSettings:
@@ -39,8 +52,8 @@ class TestAServerBatSettings:
         assert_requires_arguments(ServerBatSettings, ["server_title", "server_port", "server_config_file_name",
                                                       "server_cfg_file_name", "server_max_mem"])
 
-    def test_should_set_its_fields(self):
-        """A server bat settings should set its fields."""
+    def test_should_have_decent_defaults(self):
+        """A server bat settings should have decent defaults."""
         server_title = "title"
         server_port = "2002"
         server_config_file_name = "somepath config"
@@ -49,12 +62,26 @@ class TestAServerBatSettings:
         sb = ServerBatSettings(server_title=server_title, server_port=server_port,
                                server_config_file_name=server_config_file_name,
                                server_cfg_file_name=server_cfg_file_name, server_max_mem=server_max_mem)
+        assert sb.server_flags == ""
+        assert sb.bat_template == ""
+
+    def test_should_set_its_fields(self):
+        """A server bat settings should set its fields."""
+        server_title = "title"
+        server_port = "2002"
+        server_config_file_name = "somepath config"
+        server_cfg_file_name = "somepath cfg"
+        server_max_mem = "42"
+        bat_template = r"c:\mytemplate.txt"
+        sb = ServerBatSettings(server_title=server_title, server_port=server_port,
+                               server_config_file_name=server_config_file_name, bat_template=bat_template,
+                               server_cfg_file_name=server_cfg_file_name, server_max_mem=server_max_mem)
         assert sb.server_title == server_title
         assert sb.server_port == server_port
         assert sb.server_config_file_name == server_config_file_name
         assert sb.server_cfg_file_name == server_cfg_file_name
         assert sb.server_max_mem == server_max_mem
-        assert sb.server_flags == ""  # this should have an empty default
+        assert sb.bat_template == bat_template
         sb = ServerBatSettings(server_title=server_title, server_port=server_port,
                                server_config_file_name=server_config_file_name,
                                server_cfg_file_name=server_cfg_file_name, server_max_mem=server_max_mem,

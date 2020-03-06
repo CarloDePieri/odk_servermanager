@@ -2,7 +2,7 @@ from os.path import isdir, isfile, islink, join, splitdrive
 from os import listdir, mkdir
 import pytest
 
-from conftest import test_folder_structure_path, spy, touch
+from conftest import test_folder_structure_path, spy, touch, test_resources
 from odksm_test import ODKSMTest
 from odk_servermanager.instance import ServerInstance
 from odk_servermanager.settings import ServerInstanceSettings, ServerBatSettings, ServerConfigSettings
@@ -58,6 +58,13 @@ class TestWhenConfigComposingTheServerInstance(ODKSMTest):
         with open(test_config, "r") as test, open(self.compiled_config, "r") as compiled:
             assert test.read() == compiled.read()
 
+    def test_should_be_able_to_take_a_custom_template(self):
+        """When config composing the server instance should be able to take a custom template."""
+        self.instance.S.config_settings.config_template = join(test_resources, "simple_template_config.txt")
+        self.instance._compile_config_file()
+        with open(self.compiled_config, "r") as compiled:
+            assert compiled.read() == "TRAINING SERVER\n123\nabc\nmission.name"
+
 
 class TestWhenBatComposingTheServerInstance(ODKSMTest):
     """Test: when bat composing bat the server instance..."""
@@ -102,6 +109,13 @@ class TestWhenBatComposingTheServerInstance(ODKSMTest):
                                           instance_path)
             test_file = test_file.replace("C:", splitdrive(self.compiled_bat)[0])
             assert test_file == compiled_file
+
+    def test_should_be_able_to_take_a_custom_template_file(self):
+        """When bat composing the server instance should be able to take a custom template file."""
+        self.instance.S.bat_settings.bat_template = join(test_resources, "simple_template_bat.txt")
+        self.instance._compile_bat_file()
+        with open(self.compiled_bat, "r") as compiled:
+            assert compiled.read() == "ODK Training Server\n2202\nserverTraining.cfg\nArma3Training.cfg\n8192"
 
 
 class TestOurTestServerInstance(ODKSMTest):
