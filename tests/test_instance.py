@@ -285,6 +285,7 @@ class TestOurTestServerInstance(ODKSMTest):
         self.instance._prepare_server_core()
         warnings = len(self.instance.warnings)
         self.instance._init_mods(user_mods_list)
+        self.instance._check_mods_duplicate()
         assert len(self.instance.warnings) == warnings + 2
 
     def test_should_be_able_to_link_the_warning_folder(self, reset_folder_structure):
@@ -407,7 +408,7 @@ class TestOurTestServerInstance(ODKSMTest):
         self.instance._compile_bat_file()
         self.instance._compile_config_file()
         i = self.instance
-        with spy(i._check_mods_folders) as check_mods_fun, \
+        with spy(i._check_mods) as check_mods_fun, \
                 spy(i._update_all_mods) as update_mods_fun, \
                 spy(i._update_keys) as update_keys_fun, \
                 spy(i._update_compiled_files) as update_files_fun:
@@ -444,12 +445,17 @@ class TestServerInstanceInit(ODKSMTest):
         request.cls.instance_folder = self.instance.get_server_instance_path()
         # set up all needed spies
         with spy(self.instance._new_server_folder) as request.cls.new_server_fun, \
+                spy(self.instance._check_mods) as request.cls.check_mods_fun, \
                 spy(self.instance._prepare_server_core) as request.cls.prepare_server_fun, \
                 spy(self.instance._init_mods) as request.cls.init_mods_fun, \
                 spy(self.instance._link_keys) as request.cls.init_keys_fun, \
                 spy(self.instance._compile_bat_file) as request.cls.compiled_bat_fun, \
                 spy(self.instance._compile_config_file) as request.cls.compiled_config_fun:
             self.instance.init()
+
+    def test_should_check_the_mods(self):
+        """Server instance init should check the mods."""
+        self.check_mods_fun.assert_called()
 
     def test_should_create_the_folder_if_needed(self):
         """Server instance init should create the folder if needed."""

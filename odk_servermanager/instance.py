@@ -71,9 +71,6 @@ class ServerInstance:
         target_folder = join(server_folder, self.S.linked_mod_folder_name)
         if not islink(join(target_folder, mod_folder)):
             symlink(join(workshop_folder, mod_folder), join(target_folder, mod_folder))
-        else:
-            self._add_warning("Tried to link the mod '{}' more than once! There's a duplicate "
-                              "somewhere!".format(mod_name))
 
     def _symlink_warning_folder(self) -> None:
         """Symlink the warning folder inside the linked mod folder if needed."""
@@ -104,9 +101,6 @@ class ServerInstance:
                 mod_fix.hook_replace(self)
             else:
                 copytree(join(workshop_folder, mod_folder), join(target_folder, mod_folder))
-        else:
-            self._add_warning("Tried to copy the mod '{}' more than once! There's a duplicate "
-                              "somewhere!".format(mod_name))
         # If available, call its post hook
         if mod_fix is not None and mod_fix.hook_post is not None:
             mod_fix.hook_post(self)
@@ -218,10 +212,24 @@ class ServerInstance:
             if "@" + mod not in mods_folders_name:
                 raise ModNotFound("Could not find a mod named {}".format(mod))
 
+    def _check_mods_duplicate(self) -> None:
+        """Check for mods duplicates in the mods lists."""
+        mods = self.S.user_mods_list + self.S.server_mods_list
+        for mod in mods:
+            if mods.count(mod) > 1:
+                op = "copy" if mod in self.S.mods_to_be_copied else "link"
+                self._add_warning("Tried to {} the mod '{}' more than once! There's a duplicate "
+                                  "somewhere!".format(op, mod))
+
+    def _check_mods(self) -> None:
+        """Perform some test on the mods lists."""
+        self._check_mods_folders()
+        self._check_mods_duplicate()
+
     def init(self) -> None:
         """Create the new instance folder, filled with everything needed to start it."""
         # check mods folder
-        self._check_mods_folders()
+        self._check_mods()
         # create the folder
         self._new_server_folder()
         # prepare all arma files and folder
@@ -278,7 +286,6 @@ class ServerInstance:
                 copied_mods_folder = join(self.get_server_instance_path(), self.S.copied_mod_folder_name)
                 already_there_mods = map(lambda x: x[1:], listdir(copied_mods_folder))
                 if mod in already_there_mods:
-                    # TOIMPROVE find a way to distinguish between duplicates and updates
                     # These are the only ones that get really updated
                     self._update_copied_mod(mod)
                 else:
@@ -325,7 +332,7 @@ class ServerInstance:
         """Update an existing instance. This method assumes that the server instance is already there and functioning!
         This will relink all linked mods and keys. It will REPLACE compiled files like run_server.bat and the server
         config file with newly generated ones. By default this will also REPLACE all copied mod."""
-        self._check_mods_folders()
+        self._check_mods()
         self._update_all_mods()
         self._update_keys()
         self._update_compiled_files()
