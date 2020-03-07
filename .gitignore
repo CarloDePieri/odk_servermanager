@@ -4,3 +4,4 @@ odk_servermanager.egg-info
 tests/resources/Arma
 .idea
 odksm.iml
+.coverage

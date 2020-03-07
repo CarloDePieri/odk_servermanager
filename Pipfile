@@ -8,6 +8,8 @@ keysmanager = {editable = true,path = "."}
 pytest = "*"
 pytest-mock = "*"
 pytest-sugar = "*"
+coveralls = "*"
+pytest-cov = "*"
 
 [packages]
 beautifulsoup4 = "*"

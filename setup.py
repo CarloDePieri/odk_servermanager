@@ -19,6 +19,8 @@ setup(
                 'pytest>=5.3.5',
                 'pytest-mock>=2.0.0',
                 'pytest-sugar>=0.9.2',
+                'pytest-cov>=2.8.1',
+                'coveralls>=1.11.1'
                 ]
             }
         )
