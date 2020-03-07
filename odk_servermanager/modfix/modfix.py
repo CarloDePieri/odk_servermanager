@@ -1,5 +1,6 @@
 import os
 from importlib import import_module
+from os.path import isfile, join
 from typing import Callable, Union, List
 from odk_servermanager.instance import ServerInstance
 
@@ -26,13 +27,13 @@ class ModFix:
     hook_update_post: Union[Callable[[ServerInstance], None], None] = None
 
 
-def register_fixes() -> List[ModFix]:
-    """Return a list of ModFix objects dynamically recovered from all modules in the modfix package folder."""
+def register_fixes(enabled_fixes: List[str]) -> List[ModFix]:
+    """Return a list of ModFix objects dynamically recovered from the list passed as argument."""
     registered_fix = []
-    to_skip = ["__init__.py", "modfix.py"]
-    for module_file in os.listdir(os.path.dirname(__file__)):
-        if module_file not in to_skip and module_file[-3:] == '.py':
-            module = import_module("odk_servermanager.modfix.{}".format(module_file[:-3]))
+    to_skip = ["__init__", "modfix"]
+    for fix_name in enabled_fixes:
+        if fix_name not in to_skip and isfile(join(os.path.dirname(__file__), "{}.py".format(fix_name))):
+            module = import_module("odk_servermanager.modfix.{}".format(fix_name))
             mod_fix = module.to_be_registered
             registered_fix.append(mod_fix)
     return registered_fix

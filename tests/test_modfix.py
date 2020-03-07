@@ -6,7 +6,8 @@ import pytest
 from conftest import test_folder_structure_path, touch
 from odksm_test import ODKSMTest
 from odk_servermanager.modfix import ModFix
-from odk_servermanager.settings import ServerInstanceSettings
+from odk_servermanager.modfix.cba_a3 import ModFixCBA
+from odk_servermanager.settings import ServerInstanceSettings, ModFixSettings
 from odk_servermanager.instance import ServerInstance
 
 
@@ -41,7 +42,9 @@ class TestAModFix(ODKSMTest):
     def test_module_should_offer_a_list_of_registered_fix(self):
         """A mod fix module should offer a list of registered fix."""
         from odk_servermanager.modfix import register_fixes
-        assert isinstance(register_fixes(), List)
+        fixes = register_fixes(["cba_a3"])
+        assert isinstance(fixes, List)
+        assert isinstance(fixes[0], ModFixCBA)
 
 
 class TestAServerInstance(ODKSMTest):
@@ -54,7 +57,9 @@ class TestAServerInstance(ODKSMTest):
     def setup(self, request, reset_folder_structure, sc_stub, sb_stub):
         """TestAServerInstance setup"""
         request.cls.test_path = test_folder_structure_path()
+        request.cls.enabled_fixes = ["cba_a3"]
         settings = ServerInstanceSettings("test", sb_stub, sc_stub, user_mods_list=["ace"], mods_to_be_copied=["ace"],
+                                          fix_settings=ModFixSettings(enabled_fixes=self.enabled_fixes),
                                           arma_folder=self.test_path, server_instance_root=self.test_path)
         request.cls.instance = ServerInstance(settings)
         self.instance._new_server_folder()
@@ -64,7 +69,7 @@ class TestAServerInstance(ODKSMTest):
     def test_should_have_the_registered_fix_list(self, reset_folder_structure):
         """A server instance should have the registered fix list."""
         from odk_servermanager.modfix import register_fixes
-        assert self.instance.registered_fix == register_fixes()
+        assert self.instance.registered_fix == register_fixes(["cba_a3"])
 
     def test_should_call_its_pre_hook_if_present(self, mocker, reset_folder_structure):
         """A server instance should call its pre hook if present."""
@@ -150,10 +155,11 @@ class TestModFixCba(ODKSMTest):
         request.cls.test_path = test_folder_structure_path()
         custom_cba = join(self.test_path, "cba_settings.sqf")
         touch(custom_cba, "test")
+        fix_settings = ModFixSettings(enabled_fixes=["cba_a3"], mod_fix_settings={"cba_settings": custom_cba})
         settings = ServerInstanceSettings("test", c_sb_stub, c_sc_stub, user_mods_list=["CBA_A3"],
                                           mods_to_be_copied=["CBA_A3"], arma_folder=self.test_path,
                                           server_instance_root=self.test_path,
-                                          mod_fix_settings={"cba_settings": custom_cba})
+                                          fix_settings=fix_settings)
         request.cls.instance = ServerInstance(settings)
         self.instance._new_server_folder()
         self.instance._prepare_server_core()

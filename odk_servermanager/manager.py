@@ -5,7 +5,7 @@ from box import ConfigBox
 from bs4 import BeautifulSoup
 
 from odk_servermanager.instance import ServerInstance, ModNotFound
-from odk_servermanager.settings import ServerBatSettings, ServerConfigSettings, ServerInstanceSettings
+from odk_servermanager.settings import ServerBatSettings, ServerConfigSettings, ServerInstanceSettings, ModFixSettings
 
 
 class ServerManager:
@@ -106,10 +106,18 @@ class ServerManager:
                 settings.ODKSM[el] = list(filter(lambda x: x != "", el_list))
         # check for mod_fix
         if "mod_fix_settings" in settings:
-            settings.ODKSM.mod_fix_settings = settings.mod_fix_settings.to_dict()
+            enabled_fixes = []
+            if "enabled_fixes" in settings.mod_fix_settings:
+                enabled_fixes = settings.mod_fix_settings.list("enabled_fixes")
+                settings.mod_fix_settings.pop("enabled_fixes")  # delete the enabled_fixes from there
+            mod_fix_settings = settings.mod_fix_settings.to_dict()
+            fix_settings = ModFixSettings(enabled_fixes=enabled_fixes, mod_fix_settings=mod_fix_settings)
+        else:
+            fix_settings = ModFixSettings()
         # create the settings container
         self.settings = ServerInstanceSettings(**settings.ODKSM.to_dict(),
-                                               bat_settings=bat_settings, config_settings=config_settings)
+                                               bat_settings=bat_settings, config_settings=config_settings,
+                                               fix_settings=fix_settings)
 
     def _parse_mods_preset(self, filename: str) -> List[str]:
         """Parse an Arma 3 preset and return the List of all selected mods names."""

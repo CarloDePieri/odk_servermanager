@@ -19,10 +19,16 @@ class ServerBatSettings:
     bat_template: str
 
 
+class ModFixSettings:
+    enabled_fixes: List[str]
+    mod_fix_settings: Dict[str, str]
+
+
 class ServerInstanceSettings:
     server_instance_name: str
     bat_settings: ServerBatSettings
     config_settings: ServerConfigSettings
+    fix_settings: ModFixSettings
     arma_folder: str
     server_instance_root: str
     server_drive: str

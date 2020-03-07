@@ -1,6 +1,7 @@
 import pytest
+from box import Box
 
-from odk_servermanager.settings import ServerConfigSettings, ServerBatSettings, ServerInstanceSettings
+from odk_servermanager.settings import ServerConfigSettings, ServerBatSettings, ServerInstanceSettings, ModFixSettings
 
 
 class TestAServerConfigSettings:
@@ -98,6 +99,7 @@ class TestAServerInstanceSettings:
         """TestAServerInstanceSettings setup"""
         request.cls.sb = ServerBatSettings("title", "c:", "2000", r"c:\server.config", r"c:\server.cfg", "128")
         request.cls.sc = ServerConfigSettings("title", "123", "456", "missionName")
+        request.cls.mf = ModFixSettings(enabled_fixes=["cba_a3"], mod_fix_settings={"cba_settings": "my_cba.sqf"})
 
     def test_should_have_some_required_arguments(self, assert_requires_arguments):
         """A server instance settings should have some required arguments."""
@@ -117,7 +119,9 @@ class TestAServerInstanceSettings:
         assert si.user_mods_list == []
         assert si.server_mods_list == []
         assert si.skip_keys == ["!DO_NOT_CHANGE_FILES_IN_THESE_FOLDERS"]
-        assert si.mod_fix_settings == {}
+        assert isinstance(si.fix_settings, ModFixSettings)
+        assert si.fix_settings.enabled_fixes == []
+        assert si.fix_settings.mod_fix_settings == {}
 
     def test_should_set_its_fields(self):
         """A server instance settings should set its fields."""
@@ -131,16 +135,15 @@ class TestAServerInstanceSettings:
         server_mods_list = ["ODKMIN"]
         user_mods_list = ["ace", "CBA_A3"]
         skip_keys = ["CBA_A3"]
-        mod_fix_settings = ["CBA_A3"]
         si = ServerInstanceSettings(server_instance_name=server_instance_name,
                                     bat_settings=self.sb, config_settings=self.sc,
-                                    arma_folder=arma_folder,
+                                    arma_folder=arma_folder, fix_settings=self.mf,
                                     mods_to_be_copied=mods_to_be_copied, linked_mod_folder_name=linked_mod_folder_name,
                                     copied_mod_folder_name=copied_mod_folder_name,
                                     server_instance_prefix=server_instance_prefix,
                                     server_instance_root=server_instance_root,
                                     user_mods_list=user_mods_list, server_mods_list=server_mods_list,
-                                    skip_keys=skip_keys, mod_fix_settings=mod_fix_settings)
+                                    skip_keys=skip_keys)
         assert si.server_instance_name == server_instance_name
         assert si.arma_folder == arma_folder
         assert si.mods_to_be_copied == mods_to_be_copied
@@ -151,11 +154,37 @@ class TestAServerInstanceSettings:
         assert si.user_mods_list == user_mods_list
         assert si.server_mods_list == server_mods_list
         assert si.skip_keys == skip_keys + ["!DO_NOT_CHANGE_FILES_IN_THESE_FOLDERS"]
-        assert si.mod_fix_settings == mod_fix_settings
         assert si.server_drive == "c:"  # this is computed
+        assert si.fix_settings == self.mf
 
     def test_should_accept_other_settings_container(self):
         """A server instance settings should accept other settings container."""
         si = ServerInstanceSettings("testing", bat_settings=self.sb, config_settings=self.sc)
         assert si.bat_settings == self.sb
         assert si.config_settings == self.sc
+
+
+class TestAModFixSettings:
+    """Test: A ModFixSettings..."""
+
+    @pytest.fixture(scope="class", autouse=True)
+    def setup(self, request):
+        """TestAModFixSettings setup"""
+        request.cls.mf = ModFixSettings()
+
+    def test_should_be_a_box(self):
+        """A mod fix settings should be a box."""
+        assert isinstance(self.mf, Box)
+
+    def test_should_have_decent_defaults(self):
+        """A mod fix settings should have decent defaults."""
+        assert self.mf.enabled_fixes == []
+        assert self.mf.mod_fix_settings == {}
+
+    def test_should_be_able_to_take_custom_fields(self):
+        """A mod fix settings should be able to take custom fields."""
+        enabled_fixes = ["cba_a3"]
+        mod_fix_settings = {"cba_settings": "my_cba.sqf"}
+        mf = ModFixSettings(enabled_fixes=enabled_fixes, mod_fix_settings=mod_fix_settings)
+        assert mf.enabled_fixes == enabled_fixes
+        assert mf.mod_fix_settings == mod_fix_settings

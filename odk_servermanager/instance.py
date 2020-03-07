@@ -19,7 +19,7 @@ class ServerInstance:
     def __init__(self, settings: ServerInstanceSettings):
         self.S = settings
         from odk_servermanager.modfix import register_fixes
-        self.registered_fix = register_fixes()
+        self.registered_fix = register_fixes(enabled_fixes=self.S.fix_settings.enabled_fixes)
 
     def get_server_instance_path(self) -> str:
         """Return the server instance path."""

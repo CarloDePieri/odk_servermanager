@@ -31,7 +31,7 @@ class ModFixCBA(ModFix):
         # Create the userconfig folder
         mkdir(join(mod_folder, "userconfig"))
         # Recover the custom cba settings if present else copy the original one
-        mod_fix_settings = server_instance.S.mod_fix_settings
+        mod_fix_settings = server_instance.S.fix_settings.mod_fix_settings
         if mod_fix_settings is not None and mod_fix_settings.get("cba_settings", None) is not None:
             src = mod_fix_settings["cba_settings"]
             dest = join(mod_folder, "userconfig", "cba_settings.sqf")

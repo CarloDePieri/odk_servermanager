@@ -1,11 +1,10 @@
 from os.path import join, isfile
-from typing import Dict
 
 import pytest
 
 from conftest import test_preset_file_name, test_resources, test_folder_structure_path
 from odk_servermanager.manager import ServerManager
-from odk_servermanager.settings import ServerInstanceSettings, ServerBatSettings, ServerConfigSettings
+from odk_servermanager.settings import ServerInstanceSettings, ServerBatSettings, ServerConfigSettings, ModFixSettings
 from odksm_test import ODKSMTest
 from odk_servermanager.utils import rmtree
 
@@ -42,12 +41,13 @@ class TestThePresetManager:
         assert isinstance(sm.settings, ServerInstanceSettings)
         assert isinstance(sm.settings.bat_settings, ServerBatSettings)
         assert isinstance(sm.settings.config_settings, ServerConfigSettings)
-        assert isinstance(sm.settings.mod_fix_settings, Dict)
+        assert isinstance(sm.settings.fix_settings, ModFixSettings)
         assert sm.settings.server_instance_name == "training"
         assert sm.settings.mods_to_be_copied == ["CBA_A3"]
         assert sm.settings.bat_settings.server_title == "TEST SERVER"
         assert sm.settings.config_settings.password == "p4ssw0rd"
-        assert sm.settings.mod_fix_settings["cba_settings"] == "tests/resources/server.cfg"
+        assert sm.settings.fix_settings.mod_fix_settings["cba_settings"] == "tests/resources/server.cfg"
+        assert sm.settings.fix_settings.enabled_fixes == ["cba_a3"]
         assert len(sm.settings.skip_keys) == 1  # this check that empty list field in config don't pollute the list
 
     def test_should_read_the_config_and_parse_the_preset_if_present_at_init(self):
