@@ -40,8 +40,8 @@ class TestAModFix(ODKSMTest):
 
     def test_module_should_offer_a_list_of_registered_fix(self):
         """A mod fix module should offer a list of registered fix."""
-        from odk_servermanager.modfix import registered_fix
-        assert isinstance(registered_fix, List)
+        from odk_servermanager.modfix import register_fixes
+        assert isinstance(register_fixes(), List)
 
 
 class TestAServerInstance(ODKSMTest):
@@ -63,8 +63,8 @@ class TestAServerInstance(ODKSMTest):
 
     def test_should_have_the_registered_fix_list(self, reset_folder_structure):
         """A server instance should have the registered fix list."""
-        from odk_servermanager.modfix import registered_fix
-        assert self.instance.registered_fix == registered_fix
+        from odk_servermanager.modfix import register_fixes
+        assert self.instance.registered_fix == register_fixes()
 
     def test_should_call_its_pre_hook_if_present(self, mocker, reset_folder_structure):
         """A server instance should call its pre hook if present."""

@@ -1,30 +1,9 @@
 from os import mkdir, listdir
 from os.path import join
-from typing import Callable, List, Union
+
 from odk_servermanager.instance import ServerInstance
+from odk_servermanager.modfix import ModFix
 from odk_servermanager.utils import symlink, copy
-
-
-class ModFix:
-    """Generic class used to apply specific operations before, in place of or after copying a certain mod
-    into its server instance folder.
-    All hooks are functions that take as its only argument the ServerInstance object.
-
-    :name: The mod DisplayName
-    :hook_pre: This hook gets called before the mod copy begin.
-    :hook_replace: This hook gets called instead of the usual mod copy.
-    :hook_post: This hook gets called after the mod copy end.
-    :hook_update_pre: This hook gets called before the mod update begin.
-    :hook_update_replace: This hook gets called instead of the usual mod update.
-    :hook_update_post: This hook gets called after the mod update end.
-    """
-    name: str = ""
-    hook_pre: Union[Callable[[ServerInstance], None], None] = None
-    hook_replace: Union[Callable[[ServerInstance], None], None] = None
-    hook_post: Union[Callable[[ServerInstance], None], None] = None
-    hook_update_pre: Union[Callable[[ServerInstance], None], None] = None
-    hook_update_replace: Union[Callable[[ServerInstance], None], None] = None
-    hook_update_post: Union[Callable[[ServerInstance], None], None] = None
 
 
 class ModFixCBA(ModFix):
@@ -69,8 +48,4 @@ class ModFixCBA(ModFix):
         pass
 
 
-# This module variable will store all registered ModFix and then will be used by ServerInstance to know which fix to
-# apply.
-registered_fix: List[ModFix] = [
-    ModFixCBA()
-]
+to_be_registered = ModFixCBA()
