@@ -4,6 +4,8 @@ from os.path import isfile, join
 from typing import Callable, Union, List
 from odk_servermanager.instance import ServerInstance
 
+HOOK_TYPE = Union[Callable[[ServerInstance], None], None]
+
 
 class ModFix:
     """Generic class used to apply specific operations before, in place of or after copying a certain mod
@@ -17,14 +19,24 @@ class ModFix:
     :hook_update_pre: This hook gets called before the mod update begin.
     :hook_update_replace: This hook gets called instead of the usual mod update.
     :hook_update_post: This hook gets called after the mod update end.
+
+    TAKE NOTICE: DO NOT OVERWRITE hook_caller. It's the wrapper used to to call hooks and manage errors.
     """
     name: str = ""
-    hook_pre: Union[Callable[[ServerInstance], None], None] = None
-    hook_replace: Union[Callable[[ServerInstance], None], None] = None
-    hook_post: Union[Callable[[ServerInstance], None], None] = None
-    hook_update_pre: Union[Callable[[ServerInstance], None], None] = None
-    hook_update_replace: Union[Callable[[ServerInstance], None], None] = None
-    hook_update_post: Union[Callable[[ServerInstance], None], None] = None
+    hook_pre: HOOK_TYPE = None
+    hook_replace: HOOK_TYPE = None
+    hook_post: HOOK_TYPE = None
+    hook_update_pre: HOOK_TYPE = None
+    hook_update_replace: HOOK_TYPE = None
+    hook_update_post: HOOK_TYPE = None
+
+    def hook_caller(self, hook_name: str, server_instance: ServerInstance) -> None:
+        """DO NOT OVERWRITE THIS METHOD. Wrapper to manage errors in hook execution."""
+        try:
+            getattr(self, "hook_{}".format(hook_name))(server_instance)
+        except Exception:
+            # This is intentionally broad to defend against all kind of errors inside user mod fix
+            raise ErrorInModFix("Error when executing the '{}' mod fix.".format(self.name))
 
 
 def register_fixes(enabled_fixes: List[str]) -> List[ModFix]:
@@ -52,4 +64,8 @@ class NonExistingFixFile(Exception):
 
 
 class MisconfiguredModFix(Exception):
+    """"""
+
+
+class ErrorInModFix(Exception):
     """"""

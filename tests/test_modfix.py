@@ -5,7 +5,7 @@ import pytest
 
 from conftest import test_folder_structure_path, touch
 from odksm_test import ODKSMTest
-from odk_servermanager.modfix import ModFix, register_fixes, NonExistingFixFile, MisconfiguredModFix
+from odk_servermanager.modfix import ModFix, register_fixes, NonExistingFixFile, MisconfiguredModFix, ErrorInModFix
 from odk_servermanager.modfix.cba_a3 import ModFixCBA
 from odk_servermanager.settings import ServerInstanceSettings, ModFixSettings
 from odk_servermanager.instance import ServerInstance
@@ -60,6 +60,9 @@ class TestAServerInstance(ODKSMTest):
     def dummy_hook(self, server_instance):
         pass
 
+    def broken_hook(self, server_instance):
+        raise Exception
+
     @pytest.fixture(autouse=True)
     def setup(self, request, reset_folder_structure, sc_stub, sb_stub):
         """TestAServerInstance setup"""
@@ -89,6 +92,10 @@ class TestAServerInstance(ODKSMTest):
         self.instance._copy_mod("ace")
         hook.assert_called_with(self.instance)
         assert isdir(join(self.instance.get_server_instance_path(), self.instance.S.copied_mod_folder_name, "@ace"))
+        # ... and should raise error if needed
+        mf.hook_pre = self.broken_hook
+        with pytest.raises(ErrorInModFix):
+            self.instance._copy_mod("ace")
 
     def test_should_call_its_post_hook_if_present(self, mocker, reset_folder_structure):
         """A server instance should call its post hook if present."""
@@ -101,6 +108,10 @@ class TestAServerInstance(ODKSMTest):
         self.instance._copy_mod("ace")
         hook.assert_called_with(self.instance)
         assert isdir(join(self.instance.get_server_instance_path(), self.instance.S.copied_mod_folder_name, "@ace"))
+        # ... and should raise error if needed
+        mf.hook_post = self.broken_hook
+        with pytest.raises(ErrorInModFix):
+            self.instance._copy_mod("ace")
 
     def test_should_call_its_replace_hook_if_present(self, mocker, reset_folder_structure):
         """A server instance should call its replace hook if present."""
@@ -114,6 +125,10 @@ class TestAServerInstance(ODKSMTest):
         hook.assert_called_with(self.instance)
         assert not isdir(join(self.instance.get_server_instance_path(),
                               self.instance.S.copied_mod_folder_name, "@ace"))
+        # ... and should raise error if needed
+        mf.hook_replace = self.broken_hook
+        with pytest.raises(ErrorInModFix):
+            self.instance._copy_mod("ace")
 
     def test_should_call_its_pre_update_hook_if_present(self, mocker, reset_folder_structure):
         """A server instance should call its pre update hook if present."""
@@ -125,6 +140,10 @@ class TestAServerInstance(ODKSMTest):
         self.instance.registered_fix = [mf]
         self.instance._update_copied_mod("CBA_A3")
         hook.assert_called_with(self.instance)
+        # ... and should raise error if needed
+        mf.hook_update_pre = self.broken_hook
+        with pytest.raises(ErrorInModFix):
+            self.instance._update_copied_mod("CBA_A3")
 
     def test_should_call_its_post_update_hook_if_present(self, mocker, reset_folder_structure):
         """A server instance should call its post update hook if present."""
@@ -136,6 +155,10 @@ class TestAServerInstance(ODKSMTest):
         self.instance.registered_fix = [mf]
         self.instance._update_copied_mod("CBA_A3")
         hook.assert_called_with(self.instance)
+        # ... and should raise error if needed
+        mf.hook_update_post = self.broken_hook
+        with pytest.raises(ErrorInModFix):
+            self.instance._update_copied_mod("CBA_A3")
 
     def test_should_call_its_replace_update_hook_if_present(self, mocker, reset_folder_structure):
         """A server instance should call its replace update hook if present."""
@@ -151,6 +174,10 @@ class TestAServerInstance(ODKSMTest):
         self.instance._update_copied_mod("CBA_A3")
         hook.assert_called_with(self.instance)
         assert isfile(custom_file)
+        # ... and should raise error if needed
+        mf.hook_update_replace = self.broken_hook
+        with pytest.raises(ErrorInModFix):
+            self.instance._update_copied_mod("CBA_A3")
 
 
 class TestModFixCba(ODKSMTest):

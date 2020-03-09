@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 
 from odk_servermanager.instance import ServerInstance, ModNotFound
 from odk_servermanager.settings import ServerBatSettings, ServerConfigSettings, ServerInstanceSettings, ModFixSettings
-from odk_servermanager.modfix import MisconfiguredModFix, NonExistingFixFile
+from odk_servermanager.modfix import MisconfiguredModFix, NonExistingFixFile, ErrorInModFix
 
 
 class ServerManager:
@@ -24,7 +24,7 @@ class ServerManager:
             self._recover_settings()
             self.instance = ServerInstance(self.settings)
         except (NonExistingFixFile, MisconfiguredModFix) as err:
-            self._ui_abort("\n [ERR] Error while loading mod fix: {}\n".format(err.args[0]))
+            self._ui_abort("\n [ERR] Error while loading mod fix: {}\n Bye!\n".format(err.args[0]))
         except Exception as err:
             self._ui_abort("\n [ERR] Error while loading the configuration file.\n Something was wrong in the odksm "
                            "config file or in the Arma 3 mod preset.\n\n {}\n\n "
@@ -39,7 +39,10 @@ class ServerManager:
             else:
                 self._ui_update()
         except ModNotFound as err:
-            self._ui_abort("\n [ERR] Error while loading mods: {}\n".format(err.args[0]))
+            self._ui_abort("\n [ERR] Error while loading mods: {}\n Bye!\n".format(err.args[0]))
+        except ErrorInModFix as err:
+            self._ui_abort("\n [ERR] Error while executing mod fix: {}\nYOUR SERVER INSTANCE MAY BE CORRUPTED! You "
+                           "should delete it and generate it again.\n Bye!\n".format(err.args[0]))
         except Exception as err:
             self._ui_abort("\n [ERR] Generic error.\n\n {}\n\n Please take notes on what you were doing and contact "
                            "odksm team on github!\nYOUR SERVER INSTANCE MAY BE CORRUPTED! You should delete it and "

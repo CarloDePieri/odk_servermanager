@@ -92,18 +92,18 @@ class ServerInstance:
         mod_fix = mod_fix[0] if len(mod_fix) > 0 else None
         # If available, call its pre hook
         if mod_fix is not None and mod_fix.hook_pre is not None:
-            mod_fix.hook_pre(self)
+            mod_fix.hook_caller("pre", self)
         # Now check that the mod is not already copied
         target_folder = join(server_folder, self.S.copied_mod_folder_name)
         if not isdir(join(target_folder, mod_folder)):
             # If available, call its replace hook, else simply copy the mod
             if mod_fix is not None and mod_fix.hook_replace is not None:
-                mod_fix.hook_replace(self)
+                mod_fix.hook_caller("replace", self)
             else:
                 copytree(join(workshop_folder, mod_folder), join(target_folder, mod_folder))
         # If available, call its post hook
         if mod_fix is not None and mod_fix.hook_post is not None:
-            mod_fix.hook_post(self)
+            mod_fix.hook_caller("post", self)
 
     def _add_warning(self, message: str) -> None:
         """Add a warning to the warnings list."""
@@ -270,14 +270,14 @@ class ServerInstance:
         mod_fix = mod_fix[0] if len(mod_fix) > 0 else None
         # If available, call its pre update hook
         if mod_fix is not None and mod_fix.hook_update_pre is not None:
-            mod_fix.hook_update_pre(self)
+            mod_fix.hook_caller("update_pre", self)
         if mod_fix is not None and mod_fix.hook_update_replace is not None:
-            mod_fix.hook_update_replace(self)
+            mod_fix.hook_caller("update_replace", self)
         else:
             self._clear_copied_mod(mod_name)
             self._copy_mod(mod_name)
         if mod_fix is not None and mod_fix.hook_update_post is not None:
-            mod_fix.hook_update_post(self)
+            mod_fix.hook_caller("update_post", self)
 
     def _update_mods(self, mods: List[str]) -> None:
         """Update (symlinking or copying) all mods from a list."""
