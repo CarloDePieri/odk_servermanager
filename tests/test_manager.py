@@ -138,7 +138,6 @@ class TestAServerManagerAtInit(ODKSMTest):
         mocker.patch("odk_servermanager.manager.ServerManager._recover_settings", side_effect=lambda x: broken_configs())
         self._assert_aborting(self.sm.manage_instance)
 
-    @pytest.mark.runthis
     def test_should_manage_errors_while_executing_mod_fixes(self, reset_folder_structure, mocker):
         """A server manager at init should manage errors while executing mod fixes."""
         def broken_hook():
