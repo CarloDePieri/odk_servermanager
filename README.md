@@ -1,6 +1,8 @@
 # ODK Server Manager
 [![Build Status](https://travis-ci.com/CarloDePieri/odk_servermanager.svg?branch=master)](https://travis-ci.com/CarloDePieri/odk_servermanager)
 [![Coverage Status](https://coveralls.io/repos/github/CarloDePieri/odk_servermanager/badge.svg?branch=master)](https://coveralls.io/github/CarloDePieri/odk_servermanager?branch=master)
+![Supported Operating System](https://img.shields.io/badge/os-Windows-blue)
+![Maintenance](https://img.shields.io/maintenance/yes/2020)
 
 [<img src="https://www.odkclan.it/immagini/loghi/logo_home.png" height="100">](https://www.odkclan.it/)
 

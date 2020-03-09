@@ -58,7 +58,7 @@ class ModFixSettings(Box):
 
     OPTIONAL FIELDS
     ---------------
-    :enabled_fixes: list all enabled fixes' filename (without the .py). Default empty.
+    :enabled_fixes: all enabled fix file names (without the .py); will automatically put these mods in mods_to_be_copied
     :mod_fix_settings: a Dict that may contain specific ModFix settings. Default empty.
     """
 

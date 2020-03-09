@@ -39,7 +39,8 @@ class ServerManager:
             self._ui_abort("\n [ERR] Error while loading mods: {}\n".format(err.args[0]))
         except Exception as err:
             self._ui_abort("\n [ERR] Generic error.\n\n {}\n\n Please take notes on what you were doing and contact "
-                           "odksm team on github!\n Bye!\n".format(err))
+                           "odksm team on github!\nYOUR SERVER INSTANCE MAY BE CORRUPTED! You should delete it and "
+                           "generate it again.\n Bye!\n".format(err))
 
     def _ui_init(self):
         """UI to init an instance."""
@@ -118,6 +119,12 @@ class ServerManager:
         self.settings = ServerInstanceSettings(**settings.ODKSM.to_dict(),
                                                bat_settings=bat_settings, config_settings=config_settings,
                                                fix_settings=fix_settings)
+        # add missing mod_fix mods to mods_to_be_copied
+        from odk_servermanager.modfix import register_fixes
+        mod_fixes = register_fixes(fix_settings.enabled_fixes)
+        for fix in mod_fixes:
+            if fix.name not in self.settings.mods_to_be_copied:
+                self.settings.mods_to_be_copied.append(fix.name)
 
     def _parse_mods_preset(self, filename: str) -> List[str]:
         """Parse an Arma 3 preset and return the List of all selected mods names."""
