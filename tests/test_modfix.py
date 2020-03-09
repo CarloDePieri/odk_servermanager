@@ -5,7 +5,7 @@ import pytest
 
 from conftest import test_folder_structure_path, touch
 from odksm_test import ODKSMTest
-from odk_servermanager.modfix import ModFix
+from odk_servermanager.modfix import ModFix, register_fixes, NonExistingFixFile, MisconfiguredModFix
 from odk_servermanager.modfix.cba_a3 import ModFixCBA
 from odk_servermanager.settings import ServerInstanceSettings, ModFixSettings
 from odk_servermanager.instance import ServerInstance
@@ -41,10 +41,17 @@ class TestAModFix(ODKSMTest):
 
     def test_module_should_offer_a_list_of_registered_fix(self):
         """A mod fix module should offer a list of registered fix."""
-        from odk_servermanager.modfix import register_fixes
         fixes = register_fixes(["cba_a3"])
         assert isinstance(fixes, List)
         assert isinstance(fixes[0], ModFixCBA)
+
+    def test_should_raise_an_error_with_mis_configured_fixes(self, monkeypatch):
+        """A mod fix should raise an error with mis-configured fixes."""
+        with pytest.raises(NonExistingFixFile):
+            register_fixes(["NOT_THERE"])
+        monkeypatch.delattr("odk_servermanager.modfix.cba_a3.to_be_registered")  # simulate a broken mod fix
+        with pytest.raises(MisconfiguredModFix):
+            register_fixes(["cba_a3"])
 
 
 class TestAServerInstance(ODKSMTest):
@@ -195,3 +202,5 @@ class TestModFixCba(ODKSMTest):
         self.instance._update_copied_mod("CBA_A3")
         with open(cba_settings, "r") as f:
             assert f.read() == "test\nnew_config"
+
+

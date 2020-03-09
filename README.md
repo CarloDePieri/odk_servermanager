@@ -83,8 +83,8 @@ You can update a server instance if you want to change mission, mods or just a f
 This will re-link / re-copy mods, reset keys and re-compile config files.
 
 Keep in mind that when updating mods in the Arma 3 `!Workshop` folder the keys files will probably change. Sadly there's
- no way to magically link them in the instance, since the name of the file change. This means that after updating the mods
- you probably will need to update your server instance with ODKSM to re-link keys file.
+ no way to magically link them in the instance, since the name of the file itself changes. This means that after updating 
+ the mods you probably will need to update your server instance with ODKSM to re-link keys files.
  
  
 ## How does it work?

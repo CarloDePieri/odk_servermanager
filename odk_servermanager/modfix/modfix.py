@@ -32,8 +32,24 @@ def register_fixes(enabled_fixes: List[str]) -> List[ModFix]:
     registered_fix = []
     to_skip = ["__init__", "modfix"]
     for fix_name in enabled_fixes:
-        if fix_name not in to_skip and isfile(join(os.path.dirname(__file__), "{}.py".format(fix_name))):
-            module = import_module("odk_servermanager.modfix.{}".format(fix_name))
-            mod_fix = module.to_be_registered
-            registered_fix.append(mod_fix)
+        try:
+            if not isfile(join(os.path.dirname(__file__), "{}.py".format(fix_name))):
+                raise NonExistingFixFile("Could not find the file {}.py in the modfix folder.".format(fix_name))
+            if fix_name not in to_skip:
+                module = import_module("odk_servermanager.modfix.{}".format(fix_name))
+                mod_fix = module.to_be_registered
+                registered_fix.append(mod_fix)
+        except NonExistingFixFile:
+            raise
+        except Exception:
+            # This is intentionally broad to defend against all kind of errors inside user mod fix
+            raise MisconfiguredModFix("General error when importing {} mod fix.".format(fix_name))
     return registered_fix
+
+
+class NonExistingFixFile(Exception):
+    """"""
+
+
+class MisconfiguredModFix(Exception):
+    """"""

@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 
 from odk_servermanager.instance import ServerInstance, ModNotFound
 from odk_servermanager.settings import ServerBatSettings, ServerConfigSettings, ServerInstanceSettings, ModFixSettings
+from odk_servermanager.modfix import MisconfiguredModFix, NonExistingFixFile
 
 
 class ServerManager:
@@ -22,6 +23,8 @@ class ServerManager:
         try:
             self._recover_settings()
             self.instance = ServerInstance(self.settings)
+        except (NonExistingFixFile, MisconfiguredModFix) as err:
+            self._ui_abort("\n [ERR] Error while loading mod fix: {}\n".format(err.args[0]))
         except Exception as err:
             self._ui_abort("\n [ERR] Error while loading the configuration file.\n Something was wrong in the odksm "
                            "config file or in the Arma 3 mod preset.\n\n {}\n\n "
