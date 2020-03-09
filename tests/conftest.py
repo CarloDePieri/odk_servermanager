@@ -1,4 +1,6 @@
 import os
+from os.path import join
+
 import pytest
 import shutil
 import zipfile
@@ -7,10 +9,10 @@ from unittest.mock import patch
 
 from odk_servermanager.settings import ServerBatSettings, ServerConfigSettings
 
-test_resources = "tests/resources/"
-test_preset_file_name = test_resources + "preset.html"
-test_folder_structure_name = test_resources + "Arma"
-test_folder_structure_zip = test_resources + "folder_structure.zip"
+test_resources = join("tests", "resources")
+test_preset_file_name = join(test_resources, "preset.html")
+test_folder_structure_name = join(test_resources, "Arma")
+test_folder_structure_zip = join(test_resources, "folder_structure.zip")
 
 
 def test_folder_structure_path(): return os.path.abspath(test_folder_structure_name)
