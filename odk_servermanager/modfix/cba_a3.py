@@ -11,8 +11,9 @@ class ModFixCBA(ModFix):
 
     name: str = "CBA_A3"
 
-    def hook_replace(self, server_instance: ServerInstance) -> None:
-        """Used to symlink all mod files and folders but the userconfig one, where a custom cba settings file can be placed.
+    def hook_init_copy_replace(self, server_instance: ServerInstance) -> None:
+        """Used to symlink all mod files and folders but the userconfig one, where a custom cba settings file can be
+        placed.
 
         This hook will look for following fields in mod_fix_settings:
         :cba_settings: the full path of the custom cba settings. If not found, will default to the empty default one.
@@ -41,10 +42,10 @@ class ModFixCBA(ModFix):
             dest = join(mod_folder, "userconfig", "cba_settings.sqf")
             copy(src, dest)
 
-    def hook_update_replace(self, server_instance: ServerInstance) -> None:
+    def hook_update_copy_replace(self, server_instance: ServerInstance) -> None:
         """This empty hook will prevent the update of an already there cba instance.
-        This is because the hook_replace already take care of mod updating via symlinking and we don't want to lose
-        eventual customization to the cba_settings."""
+        This is because the hook_init_copy_replace already take care of mod updating via symlinking and we don't want to
+         lose eventual customization to the cba_settings."""
         pass
 
 

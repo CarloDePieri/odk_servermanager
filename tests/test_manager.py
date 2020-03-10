@@ -135,14 +135,16 @@ class TestAServerManagerAtInit(ODKSMTest):
         """A server manager at init should manage errors while parsing configurations."""
         def broken_configs():
             raise Exception
-        mocker.patch("odk_servermanager.manager.ServerManager._recover_settings", side_effect=lambda x: broken_configs())
+        mocker.patch("odk_servermanager.manager.ServerManager._recover_settings",
+                     side_effect=lambda x: broken_configs())
         self._assert_aborting(self.sm.manage_instance)
 
     def test_should_manage_errors_while_executing_mod_fixes(self, reset_folder_structure, mocker):
         """A server manager at init should manage errors while executing mod fixes."""
         def broken_hook():
             raise Exception
-        mocker.patch("odk_servermanager.modfix.cba_a3.ModFixCBA.hook_replace", side_effect=lambda x: broken_hook())
+        mocker.patch("odk_servermanager.modfix.cba_a3.ModFixCBA.hook_init_copy_replace",
+                     side_effect=broken_hook)
         mocker.patch("builtins.input", return_value="y")  # this skips the user input check
         self._assert_aborting(self.sm.manage_instance)
 

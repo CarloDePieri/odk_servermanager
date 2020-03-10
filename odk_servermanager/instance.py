@@ -38,8 +38,8 @@ class ServerInstance:
 
     def _filter_symlinks(self, element: str) -> bool:
         """Filter out certain directory that won't be symlinked."""
-        not_to_be_symlinked = ["!Workshop", self.keys_folder_name, "run_server.bat", self.S.bat_settings.server_config_file_name,
-                               "__odksm__"]
+        not_to_be_symlinked = ["!Workshop", self.keys_folder_name, "run_server.bat",
+                               self.S.bat_settings.server_config_file_name, "__odksm__"]
         return not (element.startswith(self.S.server_instance_prefix) or element in not_to_be_symlinked)
 
     def _prepare_server_core(self) -> None:
@@ -91,19 +91,19 @@ class ServerInstance:
         mod_fix = list(filter(lambda x: x.name == mod_name, self.registered_fix))
         mod_fix = mod_fix[0] if len(mod_fix) > 0 else None
         # If available, call its pre hook
-        if mod_fix is not None and mod_fix.hook_pre is not None:
-            mod_fix.hook_caller("pre", self)
+        if mod_fix is not None and mod_fix.hook_init_copy_pre is not None:
+            mod_fix.hook_caller("init_copy_pre", self)
         # Now check that the mod is not already copied
         target_folder = join(server_folder, self.S.copied_mod_folder_name)
         if not isdir(join(target_folder, mod_folder)):
             # If available, call its replace hook, else simply copy the mod
-            if mod_fix is not None and mod_fix.hook_replace is not None:
-                mod_fix.hook_caller("replace", self)
+            if mod_fix is not None and mod_fix.hook_init_copy_replace is not None:
+                mod_fix.hook_caller("init_copy_replace", self)
             else:
                 copytree(join(workshop_folder, mod_folder), join(target_folder, mod_folder))
         # If available, call its post hook
-        if mod_fix is not None and mod_fix.hook_post is not None:
-            mod_fix.hook_caller("post", self)
+        if mod_fix is not None and mod_fix.hook_init_copy_post is not None:
+            mod_fix.hook_caller("init_copy_post", self)
 
     def _add_warning(self, message: str) -> None:
         """Add a warning to the warnings list."""
@@ -269,15 +269,15 @@ class ServerInstance:
         mod_fix = list(filter(lambda x: x.name == mod_name, self.registered_fix))
         mod_fix = mod_fix[0] if len(mod_fix) > 0 else None
         # If available, call its pre update hook
-        if mod_fix is not None and mod_fix.hook_update_pre is not None:
-            mod_fix.hook_caller("update_pre", self)
-        if mod_fix is not None and mod_fix.hook_update_replace is not None:
-            mod_fix.hook_caller("update_replace", self)
+        if mod_fix is not None and mod_fix.hook_update_copy_pre is not None:
+            mod_fix.hook_caller("update_copy_pre", self)
+        if mod_fix is not None and mod_fix.hook_update_copy_replace is not None:
+            mod_fix.hook_caller("update_copy_replace", self)
         else:
             self._clear_copied_mod(mod_name)
             self._copy_mod(mod_name)
-        if mod_fix is not None and mod_fix.hook_update_post is not None:
-            mod_fix.hook_caller("update_post", self)
+        if mod_fix is not None and mod_fix.hook_update_copy_post is not None:
+            mod_fix.hook_caller("update_copy_post", self)
 
     def _update_mods(self, mods: List[str]) -> None:
         """Update (symlinking or copying) all mods from a list."""

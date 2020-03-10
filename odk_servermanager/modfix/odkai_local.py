@@ -10,7 +10,7 @@ class ModFixODKAILocal(ModFix):
 
     name: str = "ODKAI"
 
-    def hook_replace(self, server_instance: ServerInstance) -> None:
+    def hook_init_copy_replace(self, server_instance: ServerInstance) -> None:
         """Used to symlink a local version of ODKAI in the instance.
 
         This hook will look for following fields in mod_fix_settings:
@@ -22,7 +22,7 @@ class ModFixODKAILocal(ModFix):
         local_folder = abspath(mod_fix_settings["odkai_local_path"])
         symlink(local_folder, mod_folder)
 
-    def hook_update_replace(self, server_instance: ServerInstance) -> None:
+    def hook_update_copy_replace(self, server_instance: ServerInstance) -> None:
         """This empty hook will prevent the update of an already there ODKAI.
         This is because the mod is actually a symlink and does not need to be updated."""
         pass

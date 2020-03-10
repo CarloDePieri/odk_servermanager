@@ -13,22 +13,22 @@ class ModFix:
     All hooks are functions that take as its only argument the ServerInstance object.
 
     :name: The mod DisplayName
-    :hook_pre: This hook gets called before the mod copy begin.
-    :hook_replace: This hook gets called instead of the usual mod copy.
-    :hook_post: This hook gets called after the mod copy end.
-    :hook_update_pre: This hook gets called before the mod update begin.
-    :hook_update_replace: This hook gets called instead of the usual mod update.
-    :hook_update_post: This hook gets called after the mod update end.
+    :hook_init_copy_pre: This hook gets called before the mod copy begin.
+    :hook_init_copy_replace: This hook gets called instead of the usual mod copy.
+    :hook_init_copy_post: This hook gets called after the mod copy end.
+    :hook_update_copy_pre: This hook gets called before the mod update begin.
+    :hook_update_copy_replace: This hook gets called instead of the usual mod update.
+    :hook_update_copy_post: This hook gets called after the mod update end.
 
     TAKE NOTICE: DO NOT OVERWRITE hook_caller. It's the wrapper used to to call hooks and manage errors.
     """
     name: str = ""
-    hook_pre: HOOK_TYPE = None
-    hook_replace: HOOK_TYPE = None
-    hook_post: HOOK_TYPE = None
-    hook_update_pre: HOOK_TYPE = None
-    hook_update_replace: HOOK_TYPE = None
-    hook_update_post: HOOK_TYPE = None
+    hook_init_copy_pre: HOOK_TYPE = None
+    hook_init_copy_replace: HOOK_TYPE = None
+    hook_init_copy_post: HOOK_TYPE = None
+    hook_update_copy_pre: HOOK_TYPE = None
+    hook_update_copy_replace: HOOK_TYPE = None
+    hook_update_copy_post: HOOK_TYPE = None
 
     def hook_caller(self, hook_name: str, server_instance: ServerInstance) -> None:
         """DO NOT OVERWRITE THIS METHOD. Wrapper to manage errors in hook execution."""

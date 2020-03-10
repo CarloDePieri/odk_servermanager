@@ -18,25 +18,25 @@ class TestAModFix(ODKSMTest):
         """A mod fix should take as arguments hooks."""
         class ModFixTest(ModFix):
             name = "ace"
-            hook_pre = lambda s, x: 1
-            hook_replace = lambda s, x: 2
-            hook_post = lambda s, x: 3
-            hook_update_pre = lambda s, x: 4
-            hook_update_replace = lambda s, x: 5
-            hook_update_post = lambda s, x: 6
+            hook_init_copy_pre = lambda s, x: 1
+            hook_init_copy_replace = lambda s, x: 2
+            hook_init_copy_post = lambda s, x: 3
+            hook_update_copy_pre = lambda s, x: 4
+            hook_update_copy_replace = lambda s, x: 5
+            hook_update_copy_post = lambda s, x: 6
         fix = ModFixTest()
-        assert isinstance(fix.hook_replace, Callable)
-        assert isinstance(fix.hook_pre, Callable)
-        assert isinstance(fix.hook_post, Callable)
-        assert isinstance(fix.hook_update_replace, Callable)
-        assert isinstance(fix.hook_update_pre, Callable)
-        assert isinstance(fix.hook_update_post, Callable)
-        assert fix.hook_pre(None) == 1
-        assert fix.hook_replace(None) == 2
-        assert fix.hook_post(None) == 3
-        assert fix.hook_update_pre(None) == 4
-        assert fix.hook_update_replace(None) == 5
-        assert fix.hook_update_post(None) == 6
+        assert isinstance(fix.hook_init_copy_replace, Callable)
+        assert isinstance(fix.hook_init_copy_pre, Callable)
+        assert isinstance(fix.hook_init_copy_post, Callable)
+        assert isinstance(fix.hook_update_copy_replace, Callable)
+        assert isinstance(fix.hook_update_copy_pre, Callable)
+        assert isinstance(fix.hook_update_copy_post, Callable)
+        assert fix.hook_init_copy_pre(None) == 1
+        assert fix.hook_init_copy_replace(None) == 2
+        assert fix.hook_init_copy_post(None) == 3
+        assert fix.hook_update_copy_pre(None) == 4
+        assert fix.hook_update_copy_replace(None) == 5
+        assert fix.hook_update_copy_post(None) == 6
         assert fix.name == "ace"
 
     def test_module_should_offer_a_list_of_registered_fix(self):
@@ -81,92 +81,92 @@ class TestAServerInstance(ODKSMTest):
         from odk_servermanager.modfix import register_fixes
         assert self.instance.registered_fix == register_fixes(["cba_a3"])
 
-    def test_should_call_its_pre_hook_if_present(self, mocker, reset_folder_structure):
-        """A server instance should call its pre hook if present."""
+    def test_should_call_its_init_copy_pre_hook_if_present(self, mocker, reset_folder_structure):
+        """A server instance should call its init_copy_pre hook if present."""
         class ModFixTest(ModFix):
             name = "ace"
-            hook_pre = self.dummy_hook
+            hook_init_copy_pre = self.dummy_hook
         mf = ModFixTest()
-        hook = mocker.patch.object(mf, "hook_pre", side_effect=mf.hook_pre)
+        hook = mocker.patch.object(mf, "hook_init_copy_pre", side_effect=mf.hook_init_copy_pre)
         self.instance.registered_fix = [mf]
         self.instance._copy_mod("ace")
         hook.assert_called_with(self.instance)
         assert isdir(join(self.instance.get_server_instance_path(), self.instance.S.copied_mod_folder_name, "@ace"))
         # ... and should raise error if needed
-        mf.hook_pre = self.broken_hook
+        mf.hook_init_copy_pre = self.broken_hook
         with pytest.raises(ErrorInModFix):
             self.instance._copy_mod("ace")
 
-    def test_should_call_its_post_hook_if_present(self, mocker, reset_folder_structure):
-        """A server instance should call its post hook if present."""
+    def test_should_call_its_init_copy_post_hook_if_present(self, mocker, reset_folder_structure):
+        """A server instance should call its init_copy_post hook if present."""
         class ModFixTest(ModFix):
             name = "ace"
-            hook_post = self.dummy_hook
+            hook_init_copy_post = self.dummy_hook
         mf = ModFixTest()
-        hook = mocker.patch.object(mf, "hook_post", side_effect=mf.hook_post)
+        hook = mocker.patch.object(mf, "hook_init_copy_post", side_effect=mf.hook_init_copy_post)
         self.instance.registered_fix = [mf]
         self.instance._copy_mod("ace")
         hook.assert_called_with(self.instance)
         assert isdir(join(self.instance.get_server_instance_path(), self.instance.S.copied_mod_folder_name, "@ace"))
         # ... and should raise error if needed
-        mf.hook_post = self.broken_hook
+        mf.hook_init_copy_post = self.broken_hook
         with pytest.raises(ErrorInModFix):
             self.instance._copy_mod("ace")
 
-    def test_should_call_its_replace_hook_if_present(self, mocker, reset_folder_structure):
-        """A server instance should call its replace hook if present."""
+    def test_should_call_its_init_copy_replace_hook_if_present(self, mocker, reset_folder_structure):
+        """A server instance should call its init_copy_replace hook if present."""
         class ModFixTest(ModFix):
             name = "ace"
-            hook_replace = self.dummy_hook
+            hook_init_copy_replace = self.dummy_hook
         mf = ModFixTest()
-        hook = mocker.patch.object(mf, "hook_replace", side_effect=mf.hook_replace)
+        hook = mocker.patch.object(mf, "hook_init_copy_replace", side_effect=mf.hook_init_copy_replace)
         self.instance.registered_fix = [mf]
         self.instance._copy_mod("ace")
         hook.assert_called_with(self.instance)
         assert not isdir(join(self.instance.get_server_instance_path(),
                               self.instance.S.copied_mod_folder_name, "@ace"))
         # ... and should raise error if needed
-        mf.hook_replace = self.broken_hook
+        mf.hook_init_copy_replace = self.broken_hook
         with pytest.raises(ErrorInModFix):
             self.instance._copy_mod("ace")
 
-    def test_should_call_its_pre_update_hook_if_present(self, mocker, reset_folder_structure):
-        """A server instance should call its pre update hook if present."""
+    def test_should_call_its_update_copy_pre_hook_if_present(self, mocker, reset_folder_structure):
+        """A server instance should call its update_copy_pre hook if present."""
         class ModFixTest(ModFix):
             name = "CBA_A3"
-            hook_update_pre = self.dummy_hook
+            hook_update_copy_pre = self.dummy_hook
         mf = ModFixTest()
-        hook = mocker.patch.object(mf, "hook_update_pre", side_effect=mf.hook_update_pre)
+        hook = mocker.patch.object(mf, "hook_update_copy_pre", side_effect=mf.hook_update_copy_pre)
         self.instance.registered_fix = [mf]
         self.instance._update_copied_mod("CBA_A3")
         hook.assert_called_with(self.instance)
         # ... and should raise error if needed
-        mf.hook_update_pre = self.broken_hook
+        mf.hook_update_copy_pre = self.broken_hook
         with pytest.raises(ErrorInModFix):
             self.instance._update_copied_mod("CBA_A3")
 
-    def test_should_call_its_post_update_hook_if_present(self, mocker, reset_folder_structure):
-        """A server instance should call its post update hook if present."""
+    def test_should_call_its_update_copy_post_hook_if_present(self, mocker, reset_folder_structure):
+        """A server instance should call its update_copy_post hook if present."""
         class ModFixTest(ModFix):
             name = "CBA_A3"
-            hook_update_post = self.dummy_hook
+            hook_update_copy_post = self.dummy_hook
         mf = ModFixTest()
-        hook = mocker.patch.object(mf, "hook_update_post", side_effect=mf.hook_update_post)
+        hook = mocker.patch.object(mf, "hook_update_copy_post", side_effect=mf.hook_update_copy_post)
         self.instance.registered_fix = [mf]
         self.instance._update_copied_mod("CBA_A3")
         hook.assert_called_with(self.instance)
         # ... and should raise error if needed
-        mf.hook_update_post = self.broken_hook
+        mf.hook_update_copy_post = self.broken_hook
         with pytest.raises(ErrorInModFix):
             self.instance._update_copied_mod("CBA_A3")
 
-    def test_should_call_its_replace_update_hook_if_present(self, mocker, reset_folder_structure):
-        """A server instance should call its replace update hook if present."""
+    def test_should_call_its_update_copy_replace_hook_if_present(self, mocker, reset_folder_structure):
+        """A server instance should call its update_copy_replace hook if present."""
         class ModFixTest(ModFix):
             name = "CBA_A3"
-            hook_update_replace = self.dummy_hook
+            hook_update_copy_replace = self.dummy_hook
         mf = ModFixTest()
-        hook = mocker.patch.object(mf, "hook_update_replace", side_effect=mf.hook_update_replace)
+        hook = mocker.patch.object(mf, "hook_update_copy_replace", side_effect=mf.hook_update_copy_replace)
         custom_file = join(self.instance.get_server_instance_path(), self.instance.S.copied_mod_folder_name,
                            "@CBA_A3", "custom")
         touch(custom_file)
@@ -175,6 +175,6 @@ class TestAServerInstance(ODKSMTest):
         hook.assert_called_with(self.instance)
         assert isfile(custom_file)
         # ... and should raise error if needed
-        mf.hook_update_replace = self.broken_hook
+        mf.hook_update_copy_replace = self.broken_hook
         with pytest.raises(ErrorInModFix):
             self.instance._update_copied_mod("CBA_A3")
