@@ -5,7 +5,7 @@ import pytest
 from conftest import test_preset_file_name, test_resources, test_folder_structure_path
 from odk_servermanager.manager import ServerManager
 from odk_servermanager.settings import ServerInstanceSettings, ServerBatSettings, ServerConfigSettings, ModFixSettings
-from odk_servermanager.modfix import MisconfiguredModFix, NonExistingFixFile
+from odk_servermanager.modfix import MisconfiguredModFix, NonExistingFixFile, ModFix
 from odksm_test import ODKSMTest
 from odk_servermanager.utils import rmtree
 
@@ -57,6 +57,27 @@ class TestThePresetManager:
         sm._recover_settings()
         assert isinstance(sm.settings, ServerInstanceSettings)
         assert len(sm.settings.user_mods_list) == 6
+
+    def test_should_correctly_modify_mods_to_be_copied_from_the_registered_fix(self, mocker):
+        """The preset manager should correctly modify mods_to_be_copied from the registered_fix."""
+        linked = self._prepare_mod_fix_with_dummy_hook("ODKMIN", "hook_init_link_replace")
+        not_there = self._prepare_mod_fix_with_dummy_hook("NotThere", "hook_init_copied_replace")
+        copied = self._prepare_mod_fix_with_dummy_hook("CBA_A3", "hook_init_copy_replace")
+        mocker.patch("odk_servermanager.modfix.register_fixes", side_effect=lambda x: [linked, not_there, copied])
+        sm = ServerManager(join(test_resources, "config.ini"))
+        sm._parse_config()
+        assert "NotThere" not in sm.settings.mods_to_be_copied
+        assert "ODKMIN" not in sm.settings.mods_to_be_copied
+        assert "CBA_A3" in sm.settings.mods_to_be_copied
+
+    @staticmethod
+    def _prepare_mod_fix_with_dummy_hook(name: str, hook_name: str) -> ModFix:
+        class ModFixTest(ModFix):
+            """"""
+        mf = ModFixTest()
+        mf.name = name
+        setattr(mf, hook_name, lambda x: None)
+        return mf
 
 
 class TestAServerManagerAtInit(ODKSMTest):

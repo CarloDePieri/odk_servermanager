@@ -129,8 +129,15 @@ class ServerManager:
         from odk_servermanager.modfix import register_fixes
         mod_fixes = register_fixes(fix_settings.enabled_fixes)
         for fix in mod_fixes:
-            if fix.name not in self.settings.mods_to_be_copied:
-                self.settings.mods_to_be_copied.append(fix.name)
+            # Check that it's a required mod:
+            if fix.name in self.settings.user_mods_list + self.settings.server_mods_list:
+                copy_hooks = ["hook_init_copy_pre", "hook_init_copy_replace", "hook_init_copy_post",
+                              "hook_update_copy_pre", "hook_update_copy_replace", "hook_update_copy_post"]
+                for copy_hook in copy_hooks:
+                    # Check if there's a copy hook enabled...
+                    if getattr(fix, copy_hook) is not None and fix.name not in self.settings.mods_to_be_copied:
+                        # ... if so, add the mod to mods_to_be_copied
+                        self.settings.mods_to_be_copied.append(fix.name)
 
     def _parse_mods_preset(self, filename: str) -> List[str]:
         """Parse an Arma 3 preset and return the List of all selected mods names."""
