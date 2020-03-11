@@ -169,6 +169,13 @@ class TestAServerManagerAtInit(ODKSMTest):
         mocker.patch("builtins.input", return_value="y")  # this skips the user input check
         self._assert_aborting(self.sm.manage_instance)
 
+    def test_should_abort_with_more_general_errors(self, reset_folder_structure, mocker):
+        """A server manager at init should abort with more general errors."""
+        def broken_stuff():
+            raise Exception
+        mocker.patch("odk_servermanager.manager.ServerManager._ui_init", side_effect=broken_stuff)
+        self._assert_aborting(self.sm.manage_instance)
+
     def _assert_aborting(self, function):
         """Helper to test that the given function is actually making the manager abort."""
         from unittest.mock import patch

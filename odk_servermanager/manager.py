@@ -112,15 +112,12 @@ class ServerManager:
                 el_list = settings.ODKSM.list(el)
                 settings.ODKSM[el] = list(filter(lambda x: x != "", el_list))
         # check for mod_fix
-        if "mod_fix_settings" in settings:
-            enabled_fixes = []
-            if "enabled_fixes" in settings.mod_fix_settings:
-                enabled_fixes = settings.mod_fix_settings.list("enabled_fixes")
-                settings.mod_fix_settings.pop("enabled_fixes")  # delete the enabled_fixes from there
-            mod_fix_settings = settings.mod_fix_settings.to_dict()
-            fix_settings = ModFixSettings(enabled_fixes=enabled_fixes, mod_fix_settings=mod_fix_settings)
-        else:
-            fix_settings = ModFixSettings()
+        enabled_fixes = []
+        if "enabled_fixes" in settings.mod_fix_settings:
+            enabled_fixes = settings.mod_fix_settings.list("enabled_fixes")
+            settings.mod_fix_settings.pop("enabled_fixes")  # delete the enabled_fixes from there
+        mod_fix_settings = settings.mod_fix_settings.to_dict()
+        fix_settings = ModFixSettings(enabled_fixes=enabled_fixes, mod_fix_settings=mod_fix_settings)
         # create the settings container
         self.settings = ServerInstanceSettings(**settings.ODKSM.to_dict(),
                                                bat_settings=bat_settings, config_settings=config_settings,

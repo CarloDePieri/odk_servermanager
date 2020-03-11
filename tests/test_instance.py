@@ -376,8 +376,10 @@ class TestOurTestServerInstance(ODKSMTest):
         self.instance.S.user_mods_list = ["ace", "AdvProp", "ODKAI"]
         self.instance._start_op_on_mods("init", self.instance.S.user_mods_list)
         self.instance._link_keys()
+        keys_dir = join(self.instance.get_server_instance_path(), self.instance.keys_folder_name)
+        touch(join(keys_dir, "manual_key.bikey"))
         self.instance._clear_keys()
-        keys = listdir(join(self.instance.get_server_instance_path(), self.instance.keys_folder_name))
+        keys = listdir(keys_dir)
         assert keys == self.instance.arma_keys
 
     def test_should_be_able_to_update_keys(self, reset_folder_structure):

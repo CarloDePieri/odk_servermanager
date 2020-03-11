@@ -1,5 +1,5 @@
-from os import mkdir
-from os.path import join, islink
+from os import mkdir, unlink
+from os.path import join, islink, isfile
 
 import pytest
 
@@ -7,6 +7,7 @@ from conftest import test_folder_structure_path, touch
 from odksm_test import ODKSMTest
 from odk_servermanager.instance import ServerInstance
 from odk_servermanager.settings import ModFixSettings, ServerInstanceSettings
+from odk_servermanager.utils import symlink
 
 
 class TestAModFixOdkaiLocal(ODKSMTest):
@@ -38,7 +39,11 @@ class TestAModFixOdkaiLocal(ODKSMTest):
         """A mod fix odkailocal should symlink the local copy."""
         assert islink(self.mod_folder)
 
-    def test_should_do_nothing_on_update(self):
-        """A mod fix odkai local should do nothing on update."""
+    def test_on_update_should_force_the_local_copy(self):
+        """A mod fix odkai local on update should force the local copy."""
+        unlink(self.mod_folder)
+        symlink(join(self.test_path, "!Workshop", "@ODKAI"), self.mod_folder)
+        assert not isfile(join(self.mod_folder, "local_mod"))
         self.instance._start_op_on_mods("update", ["ODKAI"])
         assert islink(self.mod_folder)
+        assert isfile(join(self.mod_folder, "local_mod"))

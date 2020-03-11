@@ -19,6 +19,18 @@ class TestSymlinkFunction:
         assert islink(dest)
         assert isfile(join(dest, "testFile1.txt"))
 
+    def test_should_work_on_old_win(self, reset_folder_structure, mocker, monkeypatch):
+        """Symlink function should work on old win."""
+        mocker.patch("os.symlink", "")  # disable modern symlink
+        test_path = test_folder_structure_path()
+        src = join(test_path, "TestFolder1")
+        dest = join(test_path, "__server__TestServer0", "TestFolder1")
+        symlink(src, dest)
+        assert islink(dest)
+        assert isfile(join(dest, "testFile1.txt"))
+        with pytest.raises(OSError):
+            symlink(src, dest)  # check that errors correctly
+
 
 class TestCompileFromTemplate(ODKSMTest):
     """Test: Compile from template..."""

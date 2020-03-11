@@ -1,0 +1,6 @@
+[run]
+source =
+    odk_servermanager/
+
+[html]
+directory = tests_coverage
