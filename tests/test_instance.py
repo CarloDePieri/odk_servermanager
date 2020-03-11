@@ -164,6 +164,7 @@ class TestOurTestServerInstance(ODKSMTest):
         assert not isdir(join(server_folder, "!Workshop"))
         assert not isdir(join(server_folder, "__server__TestServer0"))
         assert not islink(join(server_folder, "__odksm__"))
+        assert not islink(join(server_folder, "userconfig"))
         # Check all symlink
         assert islink(join(server_folder, "TestFolder1"))
         assert islink(join(server_folder, "TestFolder2"))
@@ -182,6 +183,8 @@ class TestOurTestServerInstance(ODKSMTest):
         assert isfile(join(keys_folder, "a3.bikey"))
         assert isfile(join(keys_folder, "a3c.bikey"))
         assert isfile(join(keys_folder, "gm.bikey"))
+        # Check userconfig dir
+        assert isdir(join(server_folder, "userconfig"))
 
     def test_should_protect_run_server_bat(self, reset_folder_structure):
         """Our test server instance should protect run_server.bat."""

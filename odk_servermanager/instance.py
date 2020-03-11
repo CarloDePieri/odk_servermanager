@@ -38,7 +38,7 @@ class ServerInstance:
 
     def _filter_symlinks(self, element: str) -> bool:
         """Filter out certain directory that won't be symlinked."""
-        not_to_be_symlinked = ["!Workshop", self.keys_folder_name, "run_server.bat",
+        not_to_be_symlinked = ["!Workshop", self.keys_folder_name, "run_server.bat", "userconfig",
                                self.S.bat_settings.server_config_file_name, "__odksm__"]
         return not (element.startswith(self.S.server_instance_prefix) or element in not_to_be_symlinked)
 
@@ -53,7 +53,8 @@ class ServerInstance:
             dest = join(server_folder, el)
             symlink(src, dest)
         # Create the needed folder
-        to_be_created = [self.keys_folder_name, self.S.linked_mod_folder_name, self.S.copied_mod_folder_name]
+        to_be_created = [self.keys_folder_name, self.S.linked_mod_folder_name,
+                         self.S.copied_mod_folder_name, "userconfig"]
         for folder in to_be_created:
             folder = join(server_folder, folder)
             mkdir(folder)
