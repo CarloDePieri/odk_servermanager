@@ -13,12 +13,18 @@ class ModFix:
     All hooks are functions that take as its only argument the ServerInstance object.
 
     :name: The mod DisplayName
-    :hook_init_copy_pre: This hook gets called before the mod copy begin.
+    :hook_init_copy_pre: This hook gets called before the mod copy begins.
     :hook_init_copy_replace: This hook gets called instead of the usual mod copy.
-    :hook_init_copy_post: This hook gets called after the mod copy end.
-    :hook_update_copy_pre: This hook gets called before the mod update begin.
+    :hook_init_copy_post: This hook gets called after the mod copy ends.
+    :hook_update_copy_pre: This hook gets called before the mod update copy begins.
     :hook_update_copy_replace: This hook gets called instead of the usual mod update.
-    :hook_update_copy_post: This hook gets called after the mod update end.
+    :hook_update_copy_post: This hook gets called after the mod update copy ends.
+    :hook_init_link_pre: This hook gets called before the mod link begins.
+    :hook_init_link_replace: This hook gets called instead of the usual mod link.
+    :hook_init_link_post: This hook gets called after the mod link ends.
+    :hook_update_link_pre: This hook gets called before the mod update link begins.
+    :hook_update_link_replace: This hook gets called instead of the usual mod update link.
+    :hook_update_link_post: This hook gets called after the mod update link ends.
 
     TAKE NOTICE: DO NOT OVERWRITE hook_caller. It's the wrapper used to to call hooks and manage errors.
     """
@@ -29,6 +35,12 @@ class ModFix:
     hook_update_copy_pre: HOOK_TYPE = None
     hook_update_copy_replace: HOOK_TYPE = None
     hook_update_copy_post: HOOK_TYPE = None
+    hook_init_link_pre: HOOK_TYPE = None
+    hook_init_link_replace: HOOK_TYPE = None
+    hook_init_link_post: HOOK_TYPE = None
+    hook_update_link_pre: HOOK_TYPE = None
+    hook_update_link_replace: HOOK_TYPE = None
+    hook_update_link_post: HOOK_TYPE = None
 
     def hook_caller(self, hook_name: str, server_instance: ServerInstance) -> None:
         """DO NOT OVERWRITE THIS METHOD. Wrapper to manage errors in hook execution."""

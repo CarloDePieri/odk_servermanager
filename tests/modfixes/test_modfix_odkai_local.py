@@ -30,7 +30,7 @@ class TestAModFixOdkaiLocal(ODKSMTest):
         request.cls.instance = ServerInstance(settings)
         self.instance._new_server_folder()
         self.instance._prepare_server_core()
-        self.instance._copy_mod("ODKAI")
+        self.instance._apply_hooks_and_do_op("init", "copy", "ODKAI")
         request.cls.mod_folder = join(self.instance.get_server_instance_path(),
                                       self.instance.S.copied_mod_folder_name, "@ODKAI")
 
@@ -40,5 +40,5 @@ class TestAModFixOdkaiLocal(ODKSMTest):
 
     def test_should_do_nothing_on_update(self):
         """A mod fix odkai local should do nothing on update."""
-        self.instance._update_copied_mod("ODKAI")
+        self.instance._apply_hooks_and_do_op("update", "copy", "ODKAI")
         assert islink(self.mod_folder)

@@ -1,5 +1,7 @@
 from os.path import isdir, isfile, islink, join, splitdrive
 from os import listdir, mkdir
+from unittest.mock import call
+
 import pytest
 
 from conftest import test_folder_structure_path, spy, touch, test_resources
@@ -205,7 +207,7 @@ class TestOurTestServerInstance(ODKSMTest):
         # ensure the mod folders are there
         mkdir(join(server_folder, "!Mods_copied"))
         mkdir(join(server_folder, "!Mods_linked"))
-        self.instance._init_mods(user_mods_list)
+        self.instance._start_op_on_mods("init", user_mods_list)
         cba_folder = join(server_folder, "!Mods_copied", "@CBA_A3")
         assert isdir(cba_folder) and not islink(cba_folder)
         assert islink(join(server_folder, "!Mods_linked", "@ace"))
@@ -235,8 +237,8 @@ class TestOurTestServerInstance(ODKSMTest):
         self.instance.S.user_mods_list = user_mods_list
         self.instance.S.server_mods_list = server_mods_list
         self.instance._prepare_server_core()
-        self.instance._init_mods(user_mods_list)
-        self.instance._init_mods(server_mods_list)
+        self.instance._start_op_on_mods("init", user_mods_list)
+        self.instance._start_op_on_mods("init", server_mods_list)
         keys_folder = join(self.instance.get_server_instance_path(), self.instance.keys_folder_name)
         # end setup, begin actual test
         self.instance._link_keys()
@@ -250,7 +252,7 @@ class TestOurTestServerInstance(ODKSMTest):
         user_mods_list = ["3CB BAF Equipment", "3CB BAF Equipment (comp)"]
         self.instance.S.user_mods_list = user_mods_list
         self.instance._prepare_server_core()
-        self.instance._init_mods(user_mods_list)
+        self.instance._start_op_on_mods("init", user_mods_list)
         # end setup, begin actual test
         # this will fail if not handled correctly
         self.instance._link_keys()
@@ -284,7 +286,7 @@ class TestOurTestServerInstance(ODKSMTest):
         self.instance.S.mods_to_be_copied = ["ace"]
         self.instance._prepare_server_core()
         warnings = len(self.instance.warnings)
-        self.instance._init_mods(user_mods_list)
+        self.instance._start_op_on_mods("init", user_mods_list)
         self.instance._check_mods_duplicate()
         assert len(self.instance.warnings) == warnings + 2
 
@@ -295,6 +297,8 @@ class TestOurTestServerInstance(ODKSMTest):
         warning_folder_name = "!DO_NOT_CHANGE_FILES_IN_THESE_FOLDERS"
         self.instance._symlink_warning_folder()
         assert islink(join(linked_mods, warning_folder_name))
+        self.instance._symlink_warning_folder()  # be sure it manages an already existing symlink
+        assert islink(join(linked_mods, warning_folder_name))
 
     def test_should_be_able_to_copy_a_mod(self, reset_folder_structure):
         """Our test server instance should be able to copy a mod."""
@@ -303,14 +307,22 @@ class TestOurTestServerInstance(ODKSMTest):
         self.instance._copy_mod("ace")
         assert isdir(join(copied_mods, "@ace"))
 
-    def test_should_be_able_to_clean_linked_mods(self, reset_folder_structure):
+    def test_should_be_able_to_clean_linked_mods(self, reset_folder_structure, mocker):
         """Our test server instance should be able to clean linked mods."""
         linked_mods = join(self.instance.get_server_instance_path(), self.instance.S.linked_mod_folder_name)
         mkdir(linked_mods)
-        self.instance._init_mods(["ace"])
+        mocker.patch.dict(self.instance.S, {"mods_to_be_copied": []})
+        mocker.patch.dict(self.instance.S, {"user_mods_list": ["ace", "CBA_A3", "ODKAI"]})
+        self.instance._start_op_on_mods("init", ["ace", "CBA_A3", "ODKAI"])
         assert islink(join(linked_mods, "@ace"))
-        self.instance._clear_linked_mods()
+        assert islink(join(linked_mods, "@CBA_A3"))
+        assert islink(join(linked_mods, "@ODKAI"))
+        mocker.patch.dict(self.instance.S, {"mods_to_be_copied": ["CBA_A3"]})
+        mocker.patch.dict(self.instance.S, {"user_mods_list": ["CBA_A3", "ODKAI"]})
+        self.instance._clear_old_linked_mods()
         assert not islink(join(linked_mods, "@ace"))
+        assert not islink(join(linked_mods, "@CBA_A3"))
+        assert islink(join(linked_mods, "@ODKAI"))
 
     def test_should_be_able_to_clean_a_copied_mod_folder(self, reset_folder_structure):
         """Our test server instance should be able to clean a copied mod folder."""
@@ -342,7 +354,7 @@ class TestOurTestServerInstance(ODKSMTest):
         mkdir(copied_mods_folder)
         self.instance.S.user_mods_list = ["ace", "AdvProp", "ODKAI"]
         self.instance.S.mods_to_be_copied = ["ace", "AdvProp"]
-        self.instance._init_mods(self.instance.S.user_mods_list)
+        self.instance._start_op_on_mods("init", self.instance.S.user_mods_list)
         touch(join(copied_mods_folder, "@ace", "config"))
         self.instance.S.user_mods_list = ["ace", "ODKAI", "ODKMIN"]
         self.instance.S.mods_to_be_copied = ["ace", "ODKAI"]
@@ -359,7 +371,7 @@ class TestOurTestServerInstance(ODKSMTest):
         """Our test server instance should be able to clean the keys folder."""
         self.instance._prepare_server_core()
         self.instance.S.user_mods_list = ["ace", "AdvProp", "ODKAI"]
-        self.instance._init_mods(self.instance.S.user_mods_list)
+        self.instance._start_op_on_mods("init", self.instance.S.user_mods_list)
         self.instance._link_keys()
         self.instance._clear_keys()
         keys = listdir(join(self.instance.get_server_instance_path(), self.instance.keys_folder_name))
@@ -369,7 +381,7 @@ class TestOurTestServerInstance(ODKSMTest):
         """Our test server instance should be able to update keys."""
         self.instance._prepare_server_core()
         self.instance.S.user_mods_list = ["ace", "AdvProp", "ODKAI"]
-        self.instance._init_mods(self.instance.S.user_mods_list)
+        self.instance._start_op_on_mods("init", self.instance.S.user_mods_list)
         self.instance._link_keys()
         self.instance.S.user_mods_list = ["ODKAI"]
         self.instance._update_all_mods()
@@ -418,6 +430,45 @@ class TestOurTestServerInstance(ODKSMTest):
         update_keys_fun.assert_called()
         update_files_fun.assert_called()
 
+    def test_should_be_able_to_do_simple_op_instead_of_calling_hooks(self, reset_folder_structure, mocker):
+        """Our test server instance should be able to do simple op instead of calling hooks."""
+        self.instance._prepare_server_core()
+        mocker.patch.object(self.instance, "registered_fix", return_value=[])
+        with spy(self.instance._copy_mod) as copy_mod_function:
+            self.instance._apply_hooks_and_do_op("init", "copy", "CBA_A3")
+        copy_mod_function.assert_called()
+        with spy(self.instance._symlink_mod) as symlink_mod_function:
+            self.instance._apply_hooks_and_do_op("init", "link", "ace")
+        symlink_mod_function.assert_called()
+
+    def test_should_call_hooks_at_init_mods_time(self, reset_folder_structure):
+        """Our test server instance should call hooks at init mods time."""
+        self.instance._prepare_server_core()
+        with spy(self.instance._apply_hooks_and_do_op) as apply_hooks_function:
+            self.instance._start_op_on_mods("init", ["ace", "CBA_A3"])
+        apply_hooks_function.assert_has_calls([call("init", "link", "ace"), call("init", "copy", "CBA_A3")])
+
+    def test_should_have_a_working_do_default_op(self, reset_folder_structure, mocker):
+        """Our test server instance should have a working do_default_op."""
+        copy_fun = mocker.patch("odk_servermanager.instance.ServerInstance._copy_mod", side_effect=lambda x: None)
+        symlink_fun = mocker.patch("odk_servermanager.instance.ServerInstance._symlink_mod", side_effect=lambda x: None)
+        clear_mod_fun = mocker.patch("odk_servermanager.instance.ServerInstance._clear_copied_mod", side_effect=lambda x: None)
+        self.instance._do_default_op("init", "copy", "ace")
+        copy_fun.assert_called_once()
+        self.instance._do_default_op("init", "link", "ace")
+        symlink_fun.assert_called_once()
+        copy_fun.reset_mock()
+        copied_mod_folder = join(self.instance.get_server_instance_path(), self.instance.S.copied_mod_folder_name)
+        mkdir(copied_mod_folder)
+        self.instance._do_default_op("update", "copy", "ace")
+        copy_fun.assert_called_once()
+        clear_mod_fun.assert_not_called()
+        copy_fun.reset_mock()
+        mkdir(join(copied_mod_folder, "@ace"))
+        self.instance._do_default_op("update", "copy", "ace")
+        clear_mod_fun.assert_called_once()
+        copy_fun.assert_called_once()
+
 
 class TestServerInstanceInit(ODKSMTest):
     """Test: ServerInstance init..."""
@@ -447,7 +498,7 @@ class TestServerInstanceInit(ODKSMTest):
         with spy(self.instance._new_server_folder) as request.cls.new_server_fun, \
                 spy(self.instance._check_mods) as request.cls.check_mods_fun, \
                 spy(self.instance._prepare_server_core) as request.cls.prepare_server_fun, \
-                spy(self.instance._init_mods) as request.cls.init_mods_fun, \
+                spy(self.instance._start_op_on_mods) as request.cls.init_mods_fun, \
                 spy(self.instance._link_keys) as request.cls.init_keys_fun, \
                 spy(self.instance._compile_bat_file) as request.cls.compiled_bat_fun, \
                 spy(self.instance._compile_config_file) as request.cls.compiled_config_fun:
@@ -470,8 +521,8 @@ class TestServerInstanceInit(ODKSMTest):
     def test_should_copy_and_symlink_all_mods(self):
         """Server instance init should copy and symlink all mods."""
         from unittest.mock import call
-        ca = call(self.instance.S.user_mods_list)
-        cb = call(self.instance.S.server_mods_list)
+        ca = call("init", self.instance.S.user_mods_list)
+        cb = call("init", self.instance.S.server_mods_list)
         self.init_mods_fun.assert_has_calls([ca, cb])
         assert isdir(join(self.instance_folder, self.instance.S.copied_mod_folder_name, "@CBA_A3"))
         assert islink(join(self.instance_folder, self.instance.S.linked_mod_folder_name, "@ace"))

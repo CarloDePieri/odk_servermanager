@@ -3,9 +3,9 @@ from os.path import join, isdir, islink, isfile
 import pytest
 
 from conftest import test_folder_structure_path, touch
-from instance import ServerInstance
 from odksm_test import ODKSMTest
 from odk_servermanager.settings import ModFixSettings, ServerInstanceSettings
+from odk_servermanager.instance import ServerInstance
 
 
 class TestModFixCba(ODKSMTest):
@@ -25,7 +25,7 @@ class TestModFixCba(ODKSMTest):
         request.cls.instance = ServerInstance(settings)
         self.instance._new_server_folder()
         self.instance._prepare_server_core()
-        self.instance._copy_mod("CBA_A3")
+        self.instance._apply_hooks_and_do_op("init", "copy", "CBA_A3")
         request.cls.mod_folder = join(self.instance.get_server_instance_path(),
                                       self.instance.S.copied_mod_folder_name, "@CBA_A3")
 
@@ -54,6 +54,6 @@ class TestModFixCba(ODKSMTest):
         cba_settings = join(self.mod_folder, "userconfig", "cba_settings.sqf")
         with open(cba_settings, "a+") as f:
             assert f.write("\nnew_config")
-        self.instance._update_copied_mod("CBA_A3")
+        self.instance._apply_hooks_and_do_op("update", "copy", "CBA_A3")
         with open(cba_settings, "r") as f:
             assert f.read() == "test\nnew_config"

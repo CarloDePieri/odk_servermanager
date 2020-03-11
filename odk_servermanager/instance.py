@@ -83,42 +83,68 @@ class ServerInstance:
             symlink(join(workshop_folder, warning_folder_name), warning_folder)
 
     def _copy_mod(self, mod_name):
-        """Copy the given mod, taking care of calling the ModFix hook if a ModFix is registered."""
+        """Copy the given mod."""
         server_folder = self.get_server_instance_path()
         workshop_folder = join(self.S.arma_folder, "!Workshop")
         mod_folder = "@" + mod_name
+        target_folder = join(server_folder, self.S.copied_mod_folder_name)
+        if not isdir(join(target_folder, mod_folder)):
+            # The mod is not already copied, so copy it
+            copytree(join(workshop_folder, mod_folder), join(target_folder, mod_folder))
+
+    def _start_op_on_mods(self, stage: str, mods_list: List[str]) -> None:
+        """Start an init or update operation on a mod. The flow is:
+        _start_op_on_mods >> _apply_hooks_and_do_op >> hooks || _do_default_op"""
+        for mod in mods_list:
+            if mod in self.S.mods_to_be_copied:
+                self._apply_hooks_and_do_op(stage, "copy", mod)
+            else:
+                self._apply_hooks_and_do_op(stage, "link", mod)
+        self._symlink_warning_folder()
+
+    def _apply_hooks_and_do_op(self, stage: str, operation: str, mod_name: str) -> None:
+        """Method that calls hooks if present, otherwise call _do_default_op."""
         # Check if mod fixes are registered for this mod
         mod_fix = list(filter(lambda x: x.name == mod_name, self.registered_fix))
         mod_fix = mod_fix[0] if len(mod_fix) > 0 else None
+        # Compose the hooks names
+        pre_hook_name = "{}_{}_pre".format(stage, operation)
+        replace_hook_name = "{}_{}_replace".format(stage, operation)
+        post_hook_name = "{}_{}_post".format(stage, operation)
         # If available, call its pre hook
-        if mod_fix is not None and mod_fix.hook_init_copy_pre is not None:
-            mod_fix.hook_caller("init_copy_pre", self)
-        # Now check that the mod is not already copied
-        target_folder = join(server_folder, self.S.copied_mod_folder_name)
-        if not isdir(join(target_folder, mod_folder)):
-            # If available, call its replace hook, else simply copy the mod
-            if mod_fix is not None and mod_fix.hook_init_copy_replace is not None:
-                mod_fix.hook_caller("init_copy_replace", self)
-            else:
-                copytree(join(workshop_folder, mod_folder), join(target_folder, mod_folder))
+        if mod_fix is not None and getattr(mod_fix, "hook_{}".format(pre_hook_name)) is not None:
+            mod_fix.hook_caller(pre_hook_name, self)
+        # If available, call its replace hook, else execute the correct function
+        if mod_fix is not None and getattr(mod_fix, "hook_{}".format(replace_hook_name)) is not None:
+            mod_fix.hook_caller(replace_hook_name, self)
+        else:
+            self._do_default_op(stage, operation, mod_name)
         # If available, call its post hook
-        if mod_fix is not None and mod_fix.hook_init_copy_post is not None:
-            mod_fix.hook_caller("init_copy_post", self)
+        if mod_fix is not None and getattr(mod_fix, "hook_{}".format(post_hook_name)) is not None:
+            mod_fix.hook_caller(post_hook_name, self)
+
+    def _do_default_op(self, stage: str, operation: str, mod_name: str) -> None:
+        """Perform default link and copy operation, both on init and on update."""
+        if operation == "link":
+            # No need to differentiate between init and update for symlinks
+            self._symlink_mod(mod_name)
+        elif operation == "copy":
+            if stage == "init":
+                self._copy_mod(mod_name)
+            else:
+                copied_mods_folder = join(self.get_server_instance_path(), self.S.copied_mod_folder_name)
+                already_there_mods = map(lambda x: x[1:], listdir(copied_mods_folder))
+                if mod_name in already_there_mods:
+                    # These are the only ones that get really updated
+                    self._clear_copied_mod(mod_name)
+                    self._copy_mod(mod_name)
+                else:
+                    self._copy_mod(mod_name)
 
     def _add_warning(self, message: str) -> None:
         """Add a warning to the warnings list."""
         if message not in self.warnings:
             self.warnings.append(message)
-
-    def _init_mods(self, mods_list: List[str]) -> None:
-        """This will link mods to an instance, copying or symlinking them."""
-        if len(mods_list) > 0:
-            for mod in mods_list:
-                if mod in self.S.mods_to_be_copied:
-                    self._copy_mod(mod)
-                else:
-                    self._symlink_mod(mod)
-            self._symlink_warning_folder()
 
     def _compose_relative_path_linked_mods(self, mod_name: str) -> str:
         """Helper used in bat compilation. Generate a linked mod paths."""
@@ -235,8 +261,8 @@ class ServerInstance:
         # prepare all arma files and folder
         self._prepare_server_core()
         # symlink or copy user and server mods
-        self._init_mods(self.S.user_mods_list)
-        self._init_mods(self.S.server_mods_list)
+        self._start_op_on_mods("init", self.S.user_mods_list)
+        self._start_op_on_mods("init", self.S.server_mods_list)
         # link keys
         self._link_keys()
         # compile the bat
@@ -244,11 +270,11 @@ class ServerInstance:
         # compile the config file
         self._compile_config_file()
 
-    def _clear_linked_mods(self) -> None:
+    def _clear_old_linked_mods(self) -> None:
         """Clear the linked mods folder."""
         linked_mods_folder = join(self.get_server_instance_path(), self.S.linked_mod_folder_name)
-        for mod in listdir(linked_mods_folder):
-            if mod.startswith("@"):
+        for mod in filter(lambda x: x.startswith("@"), listdir(linked_mods_folder)):
+            if mod[1:] not in self.S.user_mods_list or mod[1:] in self.S.mods_to_be_copied:
                 unlink(join(linked_mods_folder, mod))
 
     def _clear_copied_mod(self, mod_name: str) -> None:
@@ -263,42 +289,12 @@ class ServerInstance:
             if mod[1:] not in self.S.mods_to_be_copied:
                 rmtree(join(copied_mods_folder, mod))
 
-    def _update_copied_mod(self, mod_name: str) -> None:
-        """Update a to be copied mod, calling the ModFix hooks if a ModFix is present."""
-        # Check if mod fixes are registered for this mod
-        mod_fix = list(filter(lambda x: x.name == mod_name, self.registered_fix))
-        mod_fix = mod_fix[0] if len(mod_fix) > 0 else None
-        # If available, call its pre update hook
-        if mod_fix is not None and mod_fix.hook_update_copy_pre is not None:
-            mod_fix.hook_caller("update_copy_pre", self)
-        if mod_fix is not None and mod_fix.hook_update_copy_replace is not None:
-            mod_fix.hook_caller("update_copy_replace", self)
-        else:
-            self._clear_copied_mod(mod_name)
-            self._copy_mod(mod_name)
-        if mod_fix is not None and mod_fix.hook_update_copy_post is not None:
-            mod_fix.hook_caller("update_copy_post", self)
-
-    def _update_mods(self, mods: List[str]) -> None:
-        """Update (symlinking or copying) all mods from a list."""
-        for mod in mods:
-            if mod in self.S.mods_to_be_copied:
-                copied_mods_folder = join(self.get_server_instance_path(), self.S.copied_mod_folder_name)
-                already_there_mods = map(lambda x: x[1:], listdir(copied_mods_folder))
-                if mod in already_there_mods:
-                    # These are the only ones that get really updated
-                    self._update_copied_mod(mod)
-                else:
-                    self._copy_mod(mod)
-            else:
-                self._symlink_mod(mod)
-
     def _update_all_mods(self) -> None:
         """Update both user and server mods and perform some cleanup tasks."""
-        self._clear_linked_mods()
+        self._clear_old_linked_mods()
         self._clear_old_copied_mods()
-        self._update_mods(self.S.user_mods_list)
-        self._update_mods(self.S.server_mods_list)
+        self._start_op_on_mods("update", self.S.user_mods_list)
+        self._start_op_on_mods("update", self.S.server_mods_list)
         self._symlink_warning_folder()
 
     def _clear_keys(self) -> None:
