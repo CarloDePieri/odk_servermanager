@@ -44,7 +44,7 @@ class TestThePresetManager:
         assert isinstance(sm.settings.config_settings, ServerConfigSettings)
         assert isinstance(sm.settings.fix_settings, ModFixSettings)
         assert sm.settings.server_instance_name == "training"
-        assert sm.settings.mods_to_be_copied == ["ace", "CBA_A3"]
+        assert sm.settings.mods_to_be_copied == ["ace"]
         assert sm.settings.bat_settings.server_title == "TEST SERVER"
         assert sm.settings.config_settings.password == "p4ssw0rd"
         assert sm.settings.fix_settings.mod_fix_settings["cba_settings"] == "tests/resources/server.cfg"
