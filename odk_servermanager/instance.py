@@ -181,6 +181,7 @@ class ServerInstance:
         settings.server_mods = self._compose_relative_path_mods(self.S.server_mods_list)
         settings.server_drive = self.S.server_drive
         settings.server_root = self.get_server_instance_path()
+        settings.instance_name = self.S.server_instance_name
         # compose and save the bat
         compile_from_template(template_file_content, compiled_bat_path, settings)
 

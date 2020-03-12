@@ -6,7 +6,7 @@
 ::--------------------------------------------------------------------------------------------
 @echo off
 color 0b
-title {{ server_title }} Monitor
+title {{ server_title }} Monitor on port {{ server_port }}
 :ServerStart
 echo .
 echo ..
@@ -14,8 +14,8 @@ echo ...
 echo Launching Server %date% %time%
 {{ server_drive }}
 cd "{{ server_root }}"
-echo {{ server_title }} Monitor... Active !
-start "Arma3" /min /wait arma3server_x64.exe -port={{ server_port }} -config={{ server_config_file_name }} -cfg={{ server_cfg_file_name }} -maxMem={{ server_max_mem }} {{ server_flags }} -mod="{{ user_mods }}" -servermod="{{ server_mods }}"
+echo {{ server_title }} Monitor on port {{ server_port }} ... Active !
+start "Arma3" /min /wait arma3server_x64.exe -name="{{ instance_name }}" -port={{ server_port }} -config={{ server_config_file_name }} -cfg={{ server_cfg_file_name }} -maxMem={{ server_max_mem }} {{ server_flags }} -mod="{{ user_mods }}" -servermod="{{ server_mods }}"
 ping 127.0.0.1 -n 15 >NUL
 echo {{ server_title }} Shutdown ... Restarting!
 ping 127.0.0.1 -n 5 >NUL

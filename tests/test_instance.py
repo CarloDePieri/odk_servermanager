@@ -75,7 +75,7 @@ class TestWhenBatComposingTheServerInstance(ODKSMTest):
     def setup(self, request, class_reset_folder_structure, c_sc_stub):
         """TestCompileBat setup"""
         request.cls.test_path = test_folder_structure_path()
-        server_instance_name = "TestServer0"
+        server_instance_name = "training"
         sb = ServerBatSettings(server_title="ODK Training Server", server_port="2202",
                                server_config_file_name="serverTraining.cfg", server_cfg_file_name="Arma3Training.cfg",
                                server_max_mem="8192", server_flags="-filePatching -autoinit -enableHT")
@@ -91,6 +91,7 @@ class TestWhenBatComposingTheServerInstance(ODKSMTest):
             server_mods_list=["AdvProp", "ODKMIN"],
         )
         request.cls.instance = ServerInstance(self.settings)
+        self.instance._new_server_folder()
         self.instance._compile_bat_file()
         request.cls.compiled_bat = join(self.instance.get_server_instance_path(), "run_server.bat")
 
