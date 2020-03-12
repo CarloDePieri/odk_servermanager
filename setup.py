@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
         name='odk_servermanager',
-        version='0.9',
+        version='1.0.0',
         packages=['odk_servermanager'],
         include_package_data=True,
         license='GPLv3',
