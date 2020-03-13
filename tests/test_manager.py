@@ -31,6 +31,15 @@ class TestPresetImporting(ODKSMTest):
         assert "ODKAI" in mods_name
         assert "ACE Compat - RHS- GREF"  # this checks for a filter fix on the name
 
+    def test_should_ignore_the_preset_without_proper_setting(self, mocker, sc_stub, sb_stub):
+        """Preset importing should ignore the preset without proper setting."""
+        manager = ServerManager("")
+        mocker.patch("odk_servermanager.manager.ServerManager._parse_config", side_effect=None)
+        parse_preset_fun = mocker.patch("odk_servermanager.manager.ServerManager._parse_mods_preset", side_effect=None)
+        manager.settings = ServerInstanceSettings("test", bat_settings=sb_stub, config_settings=sc_stub)
+        manager._recover_settings()
+        parse_preset_fun.assert_not_called()
+
 
 class TestThePresetManager:
     """Test: The preset manager..."""

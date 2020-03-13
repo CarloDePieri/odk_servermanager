@@ -94,7 +94,7 @@ class ServerManager:
     def _recover_settings(self):
         """Recover all needed settings, including mods presets."""
         self._parse_config()
-        if "user_mods_preset" in self.settings:
+        if self.settings.user_mods_preset != "":
             mods = self._parse_mods_preset(self.settings.user_mods_preset)
             # do not use shorthand += here: there's a bug in Box that will break things
             self.settings.user_mods_list = self.settings.user_mods_list + mods
