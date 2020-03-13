@@ -192,3 +192,44 @@ class TestAServerManagerAtInit(ODKSMTest):
             with pytest.raises(SystemExit):
                 function()
             abort.assert_called()
+
+
+class TestWhenDebugging:
+    """Test: When debugging..."""
+
+    @staticmethod
+    def raise_err():
+        raise Exception
+
+    def test_should_print_the_stacktrace_to_a_file(self, reset_folder_structure, mocker):
+        """When debugging should print the stacktrace to a file."""
+        import time
+        ts = time.gmtime()
+        debug_file_folder = test_folder_structure_path()
+        debug_file = join(debug_file_folder, "odksm_{}.log".format(time.strftime("%Y%m%d_%H%M%S", ts)))
+        manager = ServerManager("debugger", debug_logs_path=debug_file_folder)
+        # first check outside an exception
+        manager._print_debug_log()
+        assert not isfile(debug_file)
+        # now check inside an exception
+        try:
+            raise Exception("custom_test_exception")
+        except Exception:
+            mocker.patch("time.gmtime", return_value=ts)
+            manager._print_debug_log()
+            assert isfile(debug_file)
+            with open(debug_file, "r") as log:
+                content = log.read()
+                assert content.find("custom_test_exception") > 0
+
+    def test_ui_abort_should_call_print_debug_log_if_needed(self, reset_folder_structure, mocker):
+        """When debugging _ui_abort should call print_debug_log if needed."""
+        print_logs_fun = mocker.patch("odk_servermanager.manager.ServerManager._print_debug_log")
+        manager = ServerManager("notDebugger")
+        debugger = ServerManager("Debugger", debug_logs_path="somepath")
+        with pytest.raises(SystemExit):
+            manager._ui_abort()
+        print_logs_fun.assert_not_called()
+        with pytest.raises(SystemExit):
+            debugger._ui_abort()
+        print_logs_fun.assert_called()

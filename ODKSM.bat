@@ -9,13 +9,25 @@ IF %1.==. GOTO No1
 
 :: If you move the ODKSM.bat remember to fill in ODKSM_ROOT_PATH: it should be the absolute path to the folder that
 :: contains the run.py file
-set ODKSM_ROOT_PATH="."
+SET ODKSM_ROOT_PATH="."
+
+:: Uncomment this if you want the tool to output a log when crashing
+::SET "DEBUG=true"
 
 :: Recover the config file absolute path
-set CONFIG=%~dpfn1
+SET CONFIG=%~dpfn1
 
+:: Save the pwd for later
+SET LAUNCHING_DIR=%cd%
+
+:: Move to the tool directory
 cd "%ODKSM_ROOT_PATH%"
-pipenv run python run.py "%CONFIG%"
+
+IF "%DEBUG%"=="true" (
+    pipenv run python run.py --config "%CONFIG%" --debug-logs-path "%LAUNCHING_DIR%"
+) ELSE (
+    pipenv run python run.py --config "%CONFIG%"
+)
 
 GOTO End1
 

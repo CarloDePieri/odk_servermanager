@@ -1,3 +1,7 @@
+import sys
+import time
+import traceback
+from os.path import join
 from typing import List
 
 import reusables
@@ -14,8 +18,9 @@ class ServerManager:
     settings: ServerInstanceSettings
     instance: ServerInstance
 
-    def __init__(self, config_file: str):
+    def __init__(self, config_file: str, debug_logs_path=None):
         self.config_file = config_file
+        self.debug_logs_path = debug_logs_path
 
     def manage_instance(self):
         """Offer a basic ui so that the user can distinguish between instance's init and update."""
@@ -80,9 +85,10 @@ class ServerManager:
             for warn in self.instance.warnings:
                 print(" [WARN] {}".format(warn))
 
-    @staticmethod
-    def _ui_abort(message: str = "\n [ABORTED] Bye!\n") -> None:
+    def _ui_abort(self, message: str = "\n [ABORTED] Bye!\n") -> None:
         """Print the given message and quit the program."""
+        if self.debug_logs_path is not None:
+            self._print_debug_log()
         print(message)
         exit(1)
 
@@ -153,3 +159,18 @@ class ServerManager:
     def _display_name_filter(name: str) -> str:
         """Fix some display names peculiarities."""
         return name.replace(":", "-")
+
+    def _print_debug_log(self):
+        """Print in a log file the stacktrace."""
+        if self.debug_logs_path is not None and self._are_in_exception():
+            # Recover the traceback
+            tb = traceback.format_exc()
+            log_name = "odksm_{}.log".format(time.strftime("%Y%m%d_%H%M%S", time.gmtime()))
+            log_file = join(self.debug_logs_path, log_name)
+            with open(log_file, "w+") as log:
+                log.write(tb)
+
+    @staticmethod
+    def _are_in_exception():
+        """Return true if we are currently handling an exception"""
+        return sys.exc_info() != (None, None, None)
