@@ -73,6 +73,15 @@ def assert_requires_arguments():
     return _wrapper
 
 
+@pytest.fixture()
+def have_same_content():
+    """Helper fixture checking files content equality."""
+    def _wrapper(first_file_path: str, second_file_path:str) -> bool:
+        with open(first_file_path, "r") as first, open(second_file_path, "r") as second:
+            return first.read() == second.read()
+    return _wrapper
+
+
 # Test stubs
 def sb_stub_obj() -> ServerBatSettings:
     return ServerBatSettings("title", "2000", r"serverConfig.cfg", r"serverCfg.cfg", "128")
