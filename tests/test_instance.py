@@ -156,8 +156,9 @@ class TestOurTestServerInstance(ODKSMTest):
         with pytest.raises(DuplicateServerName):
             self.instance._new_server_folder()
 
-    def test_should_symlink_and_create_all_needed_stuff_from_the_main_folder(self, reset_folder_structure):
+    def test_should_symlink_and_create_all_needed_stuff_from_the_main_folder(self, reset_folder_structure, mocker):
         """Create instance should symlink and create all needed stuff from the main folder."""
+        mocker.patch.object(self.instance, "arma_keys", self.instance.arma_keys + ["not-there.bikey"])
         server_folder = join(self.test_path, "__server__" + self.instance.S.server_instance_name)
         mkdir(join(self.test_path, "__odksm__"))
         self.instance._prepare_server_core()
@@ -181,9 +182,10 @@ class TestOurTestServerInstance(ODKSMTest):
         # Check keys
         keys_folder = join(server_folder, "Keys")
         assert isdir(keys_folder) and not islink(keys_folder)
-        assert isfile(join(keys_folder, "a3.bikey"))
-        assert isfile(join(keys_folder, "a3c.bikey"))
-        assert isfile(join(keys_folder, "gm.bikey"))
+        assert islink(join(keys_folder, "a3.bikey"))
+        assert islink(join(keys_folder, "a3c.bikey"))
+        assert islink(join(keys_folder, "gm.bikey"))
+        assert not islink(join(keys_folder, "not-there.bikey"))
         # Check userconfig dir
         assert isdir(join(server_folder, "userconfig"))
 

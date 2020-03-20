@@ -62,7 +62,8 @@ class ServerInstance:
         for key in self.arma_keys:
             arma_key_folder = join(self.S.arma_folder, self.keys_folder_name)
             instance_key_folder = join(server_folder, self.keys_folder_name)
-            symlink(join(arma_key_folder, key), join(instance_key_folder, key))
+            if isfile(join(arma_key_folder, key)):
+                symlink(join(arma_key_folder, key), join(instance_key_folder, key))
 
     def _symlink_mod(self, mod_name) -> None:
         """Symlink a single mod in the linked mod folder."""
