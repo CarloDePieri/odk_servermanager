@@ -212,7 +212,7 @@ class ServerInstance:
 
     def _link_keys_in_folder(self, folder: str) -> None:
         """Link alla keys from the mod in the given folder to the instance keys folder."""
-        for mod_folder_name in filter(lambda x: x not in self.S.skip_keys, listdir(folder)):
+        for mod_folder_name in filter(lambda x: self._should_link_mod_key(x[1:]), listdir(folder)):
             mod_folder = abspath(join(folder, mod_folder_name))
             # look for the key folder there
             key_folder = list(filter(lambda name: name.lower() == "keys" or name.lower() == "key", listdir(mod_folder)))
@@ -225,6 +225,10 @@ class ServerInstance:
                 # check if the key is already there
                 if not islink(dest):
                     symlink(src, dest)
+
+    def _should_link_mod_key(self, mod_name: str) -> bool:
+        """Check whether a mod key should be linked."""
+        return mod_name in self.S.user_mods_list and mod_name not in self.S.skip_keys
 
     def _link_keys(self) -> None:
         """Link all keys from the copied and the linked mod folders to the instance keys folder."""

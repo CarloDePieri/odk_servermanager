@@ -247,8 +247,8 @@ class TestOurTestServerInstance(ODKSMTest):
         # end setup, begin actual test
         self.instance._link_keys()
         keys_folder_files = listdir(keys_folder)
-        assert len(keys_folder_files) == len(self.instance.S.user_mods_list) + len(
-            self.instance.S.server_mods_list) + len(self.instance.arma_keys)
+        # now check the copied keys - beware, no server mods keys!
+        assert len(keys_folder_files) == len(self.instance.S.user_mods_list) + len(self.instance.arma_keys)
 
     def test_should_skip_a_key_already_present_when_linking_them(self, reset_folder_structure):
         """Our test server instance should skip a key already present when linking them."""
@@ -475,6 +475,18 @@ class TestOurTestServerInstance(ODKSMTest):
         clear_mod_fun.assert_called_once()
         copy_fun.assert_called_once()
 
+    def test_should_be_able_to_skip_keys_when_linking_them(self, reset_folder_structure, mocker):
+        """Our test server instance should be able to skip keys when linking them."""
+        self.instance._prepare_server_core()
+        mocker.patch.object(self.instance.S, "mods_to_be_copied", [])
+        mocker.patch.object(self.instance.S, "user_mods_list", ["ace"])
+        mocker.patch.object(self.instance.S, "skip_keys", ["ace"])
+        self.instance._symlink_mod("ace")
+        self.instance._link_keys()
+        keys_folder = join(self.instance.get_server_instance_path(), self.instance.keys_folder_name)
+        keys_folder_files = listdir(keys_folder)
+        assert len(keys_folder_files) == len(self.instance.arma_keys)
+
 
 class TestServerInstanceInit(ODKSMTest):
     """Test: ServerInstance init..."""
@@ -533,13 +545,12 @@ class TestServerInstanceInit(ODKSMTest):
         assert isdir(join(self.instance_folder, self.instance.S.copied_mod_folder_name, "@CBA_A3"))
         assert islink(join(self.instance_folder, self.instance.S.linked_mod_folder_name, "@ace"))
 
-    def test_should_symlink_all_mods_keys(self):
-        """Server instance init should symlink all mods keys."""
+    def test_should_symlink_all_user_mods_keys(self):
+        """Server instance init should symlink all user mods keys."""
         self.init_keys_fun.assert_called()
         keys_folder = join(self.instance.get_server_instance_path(), self.instance.keys_folder_name)
         keys_folder_files = listdir(keys_folder)
-        assert len(keys_folder_files) == len(self.instance.S.user_mods_list) + len(
-            self.instance.S.server_mods_list) + len(self.instance.arma_keys)
+        assert len(keys_folder_files) == len(self.instance.S.user_mods_list) + len(self.instance.arma_keys)
 
     def test_should_generate_the_bat_file(self):
         """Server instance init should generate the bat file."""
