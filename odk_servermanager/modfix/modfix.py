@@ -50,6 +50,13 @@ class ModFix:
             # This is intentionally broad to defend against all kind of errors inside user mod fix
             raise ErrorInModFix("Error when executing the '{}' mod fix.".format(self.name))
 
+    def does_apply_to_mod(self, mod_name: str) -> bool:
+        """Return True if this modfix apply to the given mod name.
+
+        This is simply checked against the modfix name.
+        Modfixes can overwrite this behavior."""
+        return self.name == mod_name
+
 
 def register_fixes(enabled_fixes: List[str]) -> List[ModFix]:
     """Return a list of ModFix objects dynamically recovered from the list passed as argument."""

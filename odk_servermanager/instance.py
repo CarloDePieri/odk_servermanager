@@ -107,7 +107,7 @@ class ServerInstance:
     def _apply_hooks_and_do_op(self, stage: str, operation: str, mod_name: str) -> None:
         """Method that calls hooks if present, otherwise call _do_default_op."""
         # Check if mod fixes are registered for this mod
-        mod_fix = list(filter(lambda x: x.name == mod_name, self.registered_fix))
+        mod_fix = list(filter(lambda x: x.does_apply_to_mod(mod_name), self.registered_fix))
         mod_fix = mod_fix[0] if len(mod_fix) > 0 else None
         # Compose the hooks names
         pre_hook_name = "{}_{}_pre".format(stage, operation)
