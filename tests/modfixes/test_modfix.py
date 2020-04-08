@@ -56,10 +56,10 @@ class TestAModFix(ODKSMTest):
 class TestAServerInstance(ODKSMTest):
     """Test: A Server Instance ..."""
 
-    def dummy_hook(self, server_instance):
+    def dummy_hook(self, server_instance, call_data):
         pass
 
-    def broken_hook(self, server_instance):
+    def broken_hook(self, server_instance, call_data):
         raise Exception
 
     @pytest.fixture(autouse=True)
@@ -85,20 +85,23 @@ class TestAServerInstance(ODKSMTest):
     @pytest.mark.parametrize("stage", ["update", "init"])
     def test_should_call_its_hooks(self, time, operation, stage, mocker):
         """A server instance should call its hooks."""
+        mod_name = "CBA_A3"
+
         class ModFixTest(ModFix):
-            name = "CBA_A3"
+            name = mod_name
         mf = ModFixTest()
         hook_name = "hook_{}_{}_{}".format(stage, operation, time)
         mf.__setattr__(hook_name, self.dummy_hook)
         hook = mocker.patch.object(mf, hook_name, side_effect=mf.__getattribute__(hook_name))
         default_op = mocker.patch.object(self.instance, "_do_default_op", side_effect=self.instance._do_default_op)
         self.instance.registered_fix = [mf]
-        self.instance._apply_hooks_and_do_op(stage, operation, "CBA_A3")
-        hook.assert_called_with(self.instance)
+        self.instance._apply_hooks_and_do_op(stage, operation, mod_name)
+        call_data = [stage, operation, mod_name]
+        hook.assert_called_with(self.instance, call_data)
         if time == "replace":
             default_op.assert_not_called()
         else:
             default_op.assert_called()
         mf.__setattr__(hook_name, self.broken_hook)
         with pytest.raises(ErrorInModFix):
-            self.instance._apply_hooks_and_do_op(stage, operation, "CBA_A3")
+            self.instance._apply_hooks_and_do_op(stage, operation, mod_name)

@@ -109,21 +109,22 @@ class ServerInstance:
         # Check if mod fixes are registered for this mod
         mod_fix = list(filter(lambda x: x.does_apply_to_mod(mod_name), self.registered_fix))
         mod_fix = mod_fix[0] if len(mod_fix) > 0 else None
-        # Compose the hooks names
+        # Compose the hooks names and call data
         pre_hook_name = "{}_{}_pre".format(stage, operation)
         replace_hook_name = "{}_{}_replace".format(stage, operation)
         post_hook_name = "{}_{}_post".format(stage, operation)
+        call_data = [stage, operation, mod_name]
         # If available, call its pre hook
         if mod_fix is not None and getattr(mod_fix, "hook_{}".format(pre_hook_name)) is not None:
-            mod_fix.hook_caller(pre_hook_name, self)
+            mod_fix.hook_caller(pre_hook_name, self, call_data)
         # If available, call its replace hook, else execute the correct function
         if mod_fix is not None and getattr(mod_fix, "hook_{}".format(replace_hook_name)) is not None:
-            mod_fix.hook_caller(replace_hook_name, self)
+            mod_fix.hook_caller(replace_hook_name, self, call_data)
         else:
             self._do_default_op(stage, operation, mod_name)
         # If available, call its post hook
         if mod_fix is not None and getattr(mod_fix, "hook_{}".format(post_hook_name)) is not None:
-            mod_fix.hook_caller(post_hook_name, self)
+            mod_fix.hook_caller(post_hook_name, self, call_data)
 
     def _do_default_op(self, stage: str, operation: str, mod_name: str) -> None:
         """Perform default link and copy operation, both on init and on update."""

@@ -1,5 +1,6 @@
 from os import unlink
 from os.path import join, abspath, islink
+from typing import List
 
 from odk_servermanager.instance import ServerInstance
 from odk_servermanager.modfix import ModFix
@@ -16,11 +17,11 @@ class ModFixODKAILocal(ModFix):
 
     name: str = "ODKAI"
 
-    def hook_init_link_replace(self, server_instance: ServerInstance) -> None:
+    def hook_init_link_replace(self, server_instance: ServerInstance, call_data: List[str]) -> None:
         """Used to symlink a local version of ODKAI in the instance."""
         self._link_local_copy(server_instance)
 
-    def hook_update_link_replace(self, server_instance: ServerInstance) -> None:
+    def hook_update_link_replace(self, server_instance: ServerInstance, call_data: List[str]) -> None:
         """Make sure the local copy is symlinked."""
         mod_folder = join(server_instance.get_server_instance_path(), server_instance.S.linked_mod_folder_name,
                           "@" + self.name)

@@ -1,5 +1,6 @@
 from os import unlink
 from os.path import join, isfile, islink
+from typing import List
 
 from odk_servermanager.instance import ServerInstance
 from odk_servermanager.modfix import ModFix
@@ -21,14 +22,14 @@ class ModFixCBA(ModFix):
 
     name: str = "CBA_A3"
 
-    def hook_init_link_post(self, server_instance: ServerInstance) -> None:
+    def hook_init_link_post(self, server_instance: ServerInstance, call_data: List[str]) -> None:
         """Copy the cba_settings.sqf file in the right dir."""
         if self._is_cba_instance_specific(server_instance):
             self._copy_cba(server_instance)
         else:
             self._link_cba(server_instance)
 
-    def hook_update_link_post(self, server_instance: ServerInstance) -> None:
+    def hook_update_link_post(self, server_instance: ServerInstance, call_data: List[str]) -> None:
         """Make sure a cba_settings is copied over even on update, if its not already there."""
         cba_settings_target = self._get_cba_path(server_instance)
         if self._is_cba_instance_specific(server_instance):

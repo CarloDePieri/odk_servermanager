@@ -42,10 +42,10 @@ class ModFix:
     hook_update_link_replace: HOOK_TYPE = None
     hook_update_link_post: HOOK_TYPE = None
 
-    def hook_caller(self, hook_name: str, server_instance: ServerInstance) -> None:
+    def hook_caller(self, hook_name: str, server_instance: ServerInstance, call_data: List[str]) -> None:
         """DO NOT OVERWRITE THIS METHOD. Wrapper to manage errors in hook execution."""
         try:
-            getattr(self, "hook_{}".format(hook_name))(server_instance)
+            getattr(self, "hook_{}".format(hook_name))(server_instance, call_data)
         except Exception:
             # This is intentionally broad to defend against all kind of errors inside user mod fix
             raise ErrorInModFix("Error when executing the '{}' mod fix.".format(self.name))
