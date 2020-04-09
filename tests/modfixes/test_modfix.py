@@ -107,7 +107,6 @@ class TestAServerInstance(ODKSMTest):
             self.instance._apply_hooks_and_do_op(stage, operation, mod_name)
 
 
-@pytest.mark.runthis
 class TestACopyModFix(ODKSMTest):
     """Test: ACopyModFix..."""
 

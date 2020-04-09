@@ -1,9 +1,11 @@
+from os import mkdir
+
 import pytest
 
-from conftest import test_folder_structure_path, test_resources
+from conftest import test_folder_structure_path, test_resources, touch
 from os.path import islink, isfile, join, abspath
 
-from odk_servermanager.utils import symlink, compile_from_template
+from odk_servermanager.utils import symlink, compile_from_template, symlink_everything_from_folder
 from odksm_test import ODKSMTest
 
 
@@ -55,3 +57,38 @@ class TestCompileFromTemplate(ODKSMTest):
         compile_from_template(self.template_file_content, self.compiled_file, settings)
         with open(self.compiled_file, "r") as f:
             assert f.read() == target
+
+
+class TestSymlinkEverythingFromDir(ODKSMTest):
+    """Test: SymlinkEverythingFromDir..."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, request, reset_folder_structure):
+        """TestSymlinkEverythingFromDir setup"""
+        request.cls.test_path = test_folder_structure_path()
+        request.cls.target = join(self.test_path, "folderT")
+        request.cls.origin = join(self.test_path, "folderA")
+        mkdir(self.target)
+        mkdir(self.origin)
+        mkdir(join(self.origin, "folderB"))
+        touch(join(self.origin, "folderB", "testA"))
+        mkdir(join(self.origin, "folderC"))
+        touch(join(self.origin, "folderC", "testB"))
+        touch(join(self.origin, "testC"))
+
+    def test_should_work(self, reset_folder_structure):
+        """Symlink everything from dir should work."""
+        symlink_everything_from_folder(self.origin, self.target)
+        assert islink(join(self.target, "folderB"))
+        assert islink(join(self.target, "folderC"))
+        assert isfile(join(self.target, "folderB", "testA"))
+        assert isfile(join(self.target, "folderC", "testB"))
+        assert islink(join(self.target, "testC"))
+
+    def test_should_accept_exceptions(self, reset_folder_structure):
+        """Symlink everything from dir should accept exceptions."""
+        symlink_everything_from_folder(self.origin, self.target, ["folderB"])
+        assert not islink(join(self.target, "folderB"))
+        assert islink(join(self.target, "folderC"))
+        assert isfile(join(self.target, "folderC", "testB"))
+        assert islink(join(self.target, "testC"))
