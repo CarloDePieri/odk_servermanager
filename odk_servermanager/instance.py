@@ -21,7 +21,7 @@ class ServerInstance:
         from odk_servermanager.modfix import register_fixes
         self.registered_fix = register_fixes(enabled_fixes=self.S.fix_settings.enabled_fixes)
         for fix in self.registered_fix:
-            fix.update_mods_to_be_copied_list(self.S.mods_to_be_copied)
+            fix.update_mods_to_be_copied_list(self.S.mods_to_be_copied, self.S.user_mods_list, self.S.server_mods_list)
 
     def get_server_instance_path(self) -> str:
         """Return the server instance path."""
