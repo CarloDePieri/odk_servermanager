@@ -214,21 +214,22 @@ class ServerInstance:
         file_ext = splitext(filename)[-1].lower()
         return (isfile(filename) or islink(filename)) and (file_ext == ".bikey")
 
-    def _link_keys_in_folder(self, folder: str) -> None:
-        """Link alla keys from the mod in the given folder to the instance keys folder."""
-        for mod_folder_name in filter(lambda x: self._should_link_mod_key(x[1:]), listdir(folder)):
-            mod_folder = abspath(join(folder, mod_folder_name))
+    def _link_keys_in_folder(self, mods_root_folder: str) -> None:
+        """Link all keys from the mods in the given folder to the instance keys folder."""
+        for mod_folder_name in filter(lambda x: self._should_link_mod_key(x[1:]), listdir(mods_root_folder)):
+            mod_folder = abspath(join(mods_root_folder, mod_folder_name))
             # look for the key folder there
             key_folder = list(filter(lambda name: name.lower() == "keys" or name.lower() == "key", listdir(mod_folder)))
             if len(key_folder) > 0:
                 # if there's one, the key inside needs to be linked over the main key folder
                 mod_key_folder = join(mod_folder, key_folder[0])
-                key_file = list(filter(lambda x: self._is_keyfile(join(mod_key_folder, x)), listdir(mod_key_folder)))[0]
-                src = join(mod_key_folder, key_file)
-                dest = join(self.get_server_instance_path(), self.keys_folder_name, key_file)
-                # check if the key is already there
-                if not islink(dest):
-                    symlink(src, dest)
+                key_files = list(filter(lambda x: self._is_keyfile(join(mod_key_folder, x)), listdir(mod_key_folder)))
+                for key_file in key_files:
+                    src = join(mod_key_folder, key_file)
+                    dest = join(self.get_server_instance_path(), self.keys_folder_name, key_file)
+                    # check if the key is already there
+                    if not islink(dest):
+                        symlink(src, dest)
 
     def _should_link_mod_key(self, mod_name: str) -> bool:
         """Check whether a mod key should be linked."""

@@ -489,6 +489,30 @@ class TestOurTestServerInstance(ODKSMTest):
         keys_folder_files = listdir(keys_folder)
         assert len(keys_folder_files) == len(self.instance.arma_keys)
 
+    def test_should_manage_empty_keys_folder_inside_a_mod_folder(self, reset_folder_structure, mocker):
+        """Our test server instance should manage empty keys folder inside a mod folder."""
+        mod_root_folder = join(self.test_path, "testMods")
+        mkdir(mod_root_folder)
+        mkdir(join(mod_root_folder, "ModA"))
+        mkdir(join(mod_root_folder, "ModA", "Keys"))
+        mocker.patch.object(self.instance, "_should_link_mod_key", lambda x: True)
+        self.instance._link_keys_in_folder(mod_root_folder)  # this should not raise exception, but simply skip
+
+    def test_should_manage_multiple_keys_per_mod(self, reset_folder_structure, mocker):
+        """Our test server instance should manage multiple keys per mod."""
+        mod_root_folder = join(self.test_path, "testMods")
+        mkdir(mod_root_folder)
+        mkdir(join(mod_root_folder, "ModA"))
+        mkdir(join(mod_root_folder, "ModA", "Keys"))
+        touch(join(mod_root_folder, "ModA", "Keys", "keya.bikey"))
+        touch(join(mod_root_folder, "ModA", "Keys", "keyb.bikey"))
+        mocker.patch.object(self.instance, "_should_link_mod_key", lambda x: True)
+        instance_key_folder = join(self.instance.get_server_instance_path(), "Keys")
+        mkdir(instance_key_folder)
+        self.instance._link_keys_in_folder(mod_root_folder)
+        assert islink(join(instance_key_folder, "keya.bikey"))
+        assert islink(join(instance_key_folder, "keyb.bikey"))
+
 
 class TestServerInstanceInit(ODKSMTest):
     """Test: ServerInstance init..."""
