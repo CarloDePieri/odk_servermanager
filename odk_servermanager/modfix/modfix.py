@@ -57,6 +57,19 @@ class ModFix:
         Modfixes can overwrite this behavior."""
         return self.name == mod_name
 
+    def should_copy_mod(self) -> bool:
+        """Return True if the modfix has any copy hook set."""
+        for hook in [self.hook_init_copy_pre, self.hook_init_copy_replace, self.hook_init_copy_post,
+                     self.hook_update_copy_pre, self.hook_update_copy_replace, self.hook_update_copy_post]:
+            if hook is not None:
+                return True
+        return False
+
+    def update_mods_to_be_copied_list(self, mods_to_be_copied_list: List[str]) -> None:
+        """Update the given mods_to_be_copied list with this mods name if needed."""
+        if self.should_copy_mod() and self.name not in mods_to_be_copied_list:
+            mods_to_be_copied_list.append(self.name)
+
 
 def register_fixes(enabled_fixes: List[str]) -> List[ModFix]:
     """Return a list of ModFix objects dynamically recovered from the list passed as argument."""
