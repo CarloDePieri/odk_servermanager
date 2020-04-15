@@ -4,10 +4,9 @@ import traceback
 from os.path import join
 from typing import List
 
-import reusables
-from box import ConfigBox
 from bs4 import BeautifulSoup
 
+from odk_servermanager.config_ini import ConfigIni
 from odk_servermanager.instance import ServerInstance, ModNotFound
 from odk_servermanager.settings import ServerBatSettings, ServerConfigSettings, ServerInstanceSettings, ModFixSettings
 from odk_servermanager.modfix import MisconfiguredModFix, NonExistingFixFile, ErrorInModFix
@@ -107,25 +106,15 @@ class ServerManager:
 
     def _parse_config(self) -> None:
         """Parse the config file and create all settings container object."""
-        settings = ConfigBox(reusables.config_dict(self.config_file))
-        # compose the bat settings container
-        bat_settings = ServerBatSettings(**settings.bat.to_dict())
-        # compose the config settings container
-        config_settings = ServerConfigSettings(**settings.config.to_dict())
-        # fix list element in odksm settings
-        for el in ["user_mods_list", "mods_to_be_copied", "server_mods_list", "skip_keys"]:
-            if el in settings.ODKSM:
-                el_list = settings.ODKSM.list(el)
-                settings.ODKSM[el] = list(filter(lambda x: x != "", el_list))
-        # check for mod_fix
-        enabled_fixes = []
-        if "enabled_fixes" in settings.mod_fix_settings:
-            enabled_fixes = settings.mod_fix_settings.list("enabled_fixes")
-            settings.mod_fix_settings.pop("enabled_fixes")  # delete the enabled_fixes from there
-        mod_fix_settings = settings.mod_fix_settings.to_dict()
-        fix_settings = ModFixSettings(enabled_fixes=enabled_fixes, mod_fix_settings=mod_fix_settings)
-        # create the settings container
-        self.settings = ServerInstanceSettings(**settings.ODKSM.to_dict(),
+        # Recover data in the file
+        data = ConfigIni.read_file(self.config_file)
+        # Create settings containers
+        config_settings = ServerConfigSettings(**data["config_settings"])
+        bat_settings = ServerBatSettings(**data["bat_settings"])
+        fix_settings = ModFixSettings(enabled_fixes=data["mod_fix_settings"]["enabled_fixes"],
+                                      mod_fix_settings=data["mod_fix_settings"]["settings"])
+        # create the global settings container
+        self.settings = ServerInstanceSettings(**data["odksm"],
                                                bat_settings=bat_settings, config_settings=config_settings,
                                                fix_settings=fix_settings)
         # add missing mod_fix mods to mods_to_be_copied
