@@ -109,12 +109,13 @@ class ServerManager:
         # Recover data in the file
         data = ConfigIni.read_file(self.config_file)
         # Create settings containers
-        config_settings = ServerConfigSettings(**data["config_settings"])
-        bat_settings = ServerBatSettings(**data["bat_settings"])
-        fix_settings = ModFixSettings(enabled_fixes=data["mod_fix_settings"]["enabled_fixes"],
-                                      mod_fix_settings=data["mod_fix_settings"]["settings"])
+        config_settings = ServerConfigSettings(**data["config"])
+        bat_settings = ServerBatSettings(**data["bat"])
+        enabled_fixes = data["mod_fix_settings"].pop("enabled_fixes")
+        fix_settings = ModFixSettings(enabled_fixes=enabled_fixes,
+                                      mod_fix_settings=data["mod_fix_settings"])
         # create the global settings container
-        self.settings = ServerInstanceSettings(**data["odksm"],
+        self.settings = ServerInstanceSettings(**data["ODKSM"],
                                                bat_settings=bat_settings, config_settings=config_settings,
                                                fix_settings=fix_settings)
         # add missing mod_fix mods to mods_to_be_copied
