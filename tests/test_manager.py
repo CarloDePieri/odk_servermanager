@@ -46,7 +46,8 @@ class TestThePresetManager:
 
     def test_should_be_able_to_read_a_config_file(self):
         """The preset manager should be able to read a config file."""
-        sm = ServerManager(join(test_resources, "config.ini"))
+        sm = ServerManager()
+        sm.config_file = join(test_resources, "config.ini")
         sm._parse_config()
         assert isinstance(sm.settings, ServerInstanceSettings)
         assert isinstance(sm.settings.bat_settings, ServerBatSettings)
@@ -62,7 +63,8 @@ class TestThePresetManager:
 
     def test_should_read_the_config_and_parse_the_preset_if_present_at_init(self):
         """The preset manager should read the config and parse the preset if present at init."""
-        sm = ServerManager(join(test_resources, "config.ini"))
+        sm = ServerManager()
+        sm.config_file = join(test_resources, "config.ini")
         sm._recover_settings()
         assert isinstance(sm.settings, ServerInstanceSettings)
         assert len(sm.settings.user_mods_list) == 6
@@ -73,7 +75,8 @@ class TestThePresetManager:
         not_there = self._prepare_mod_fix_with_dummy_hook("NotThere", "hook_init_copied_replace")
         copied = self._prepare_mod_fix_with_dummy_hook("CBA_A3", "hook_init_copy_replace")
         mocker.patch("odk_servermanager.modfix.register_fixes", side_effect=lambda x: [linked, not_there, copied])
-        sm = ServerManager(join(test_resources, "config.ini"))
+        sm = ServerManager()
+        sm.config_file = join(test_resources, "config.ini")
         sm._parse_config()
         assert "NotThere" not in sm.settings.mods_to_be_copied
         assert "ODKMIN" not in sm.settings.mods_to_be_copied
@@ -95,12 +98,13 @@ class TestAServerManagerAtInit(ODKSMTest):
     @pytest.fixture(scope="class", autouse=True)
     def setup(self, request, class_reset_folder_structure):
         """TestAServerManagerAtInit setup"""
-        request.cls.sm = ServerManager(join(test_resources, "config.ini"))
+        request.cls.config_file = join(test_resources, "config.ini")
+        request.cls.sm = ServerManager()
 
     def test_should_init_the_server_instance(self, reset_folder_structure, mocker):
         """A server manager at init should init the server instance."""
         answer = mocker.patch("builtins.input", return_value="y")  # this skips the user input check
-        self.sm.manage_instance()
+        self.sm.manage_instance(self.config_file)
         answer.assert_called()
         assert isfile(join(self.sm.instance.get_server_instance_path(),
                            self.sm.settings.bat_settings.server_config_file_name))
@@ -110,7 +114,7 @@ class TestAServerManagerAtInit(ODKSMTest):
         answer = mocker.patch("builtins.input", return_value="n")  # this fails the user input check
         abort = mocker.patch("odk_servermanager.manager.ServerManager._ui_abort", side_effect=self.sm._ui_abort)
         with pytest.raises(SystemExit):
-            self.sm.manage_instance()
+            self.sm.manage_instance(self.config_file)
         answer.assert_called()
         abort.assert_called()
 
@@ -118,11 +122,11 @@ class TestAServerManagerAtInit(ODKSMTest):
         """A server manager at init should ask confirmation before update if called twice."""
         # setup
         mocker.patch("builtins.input", return_value="y")  # this skips the user input check
-        self.sm.manage_instance()
+        self.sm.manage_instance(self.config_file)
         # end setup
         answer = mocker.patch("builtins.input", return_value="y")  # this skips the user input check
         update = mocker.patch("odk_servermanager.instance.ServerInstance.update", side_effect=self.sm.instance.update)
-        self.sm.manage_instance()
+        self.sm.manage_instance(self.config_file)
         answer.assert_called()
         update.assert_called()
 
@@ -130,13 +134,13 @@ class TestAServerManagerAtInit(ODKSMTest):
         """A server manager at init should stop when updating if its told to do so."""
         # setup
         mocker.patch("builtins.input", return_value="y")  # this skips the user input check
-        self.sm.manage_instance()
+        self.sm.manage_instance(self.config_file)
         # end setup
         answer = mocker.patch("builtins.input", return_value="n")
         update = mocker.patch("odk_servermanager.instance.ServerInstance.update", side_effect=self.sm.instance.update)
         abort = mocker.patch("odk_servermanager.manager.ServerManager._ui_abort", side_effect=self.sm._ui_abort)
         with pytest.raises(SystemExit):
-            self.sm.manage_instance()
+            self.sm.manage_instance(self.config_file)
         answer.assert_called()
         update.assert_not_called()
         abort.assert_called()
@@ -145,21 +149,21 @@ class TestAServerManagerAtInit(ODKSMTest):
         """A server manager at init should stop with non existing mod."""
         rmtree(join(test_folder_structure_path(), "!Workshop", "@CBA_A3"))
         mocker.patch("builtins.input", return_value="y")  # this skips the user input check
-        self._assert_aborting(self.sm.manage_instance)
+        self._assert_aborting(self.sm.manage_instance, {"config_file": self.config_file})
 
     def test_should_check_the_config_file(self, reset_folder_structure):
         """A server manager at init should check the config file."""
         sm = ServerManager(join(test_folder_structure_path(), "template.txt"))
-        self._assert_aborting(sm.manage_instance)
+        self._assert_aborting(sm.manage_instance, {"config_file": self.config_file})
 
     def test_should_catch_exception_regarding_mod_fixes(self, reset_folder_structure, mocker):
         """A server manager at init should catch exception regarding mod fixes."""
         def broken_fixes(error):
             raise error("something went wrong")
         mocker.patch("odk_servermanager.modfix.register_fixes", side_effect=lambda x: broken_fixes(MisconfiguredModFix))
-        self._assert_aborting(self.sm.manage_instance)
+        self._assert_aborting(self.sm.manage_instance, {"config_file": self.config_file})
         mocker.patch("odk_servermanager.modfix.register_fixes", side_effect=lambda x: broken_fixes(NonExistingFixFile))
-        self._assert_aborting(self.sm.manage_instance)
+        self._assert_aborting(self.sm.manage_instance, {"config_file": self.config_file})
 
     def test_should_manage_errors_while_parsing_configurations(self, reset_folder_structure, mocker):
         """A server manager at init should manage errors while parsing configurations."""
@@ -167,7 +171,7 @@ class TestAServerManagerAtInit(ODKSMTest):
             raise Exception
         mocker.patch("odk_servermanager.manager.ServerManager._recover_settings",
                      side_effect=lambda x: broken_configs())
-        self._assert_aborting(self.sm.manage_instance)
+        self._assert_aborting(self.sm.manage_instance, {"config_file": self.config_file})
 
     def test_should_manage_errors_while_executing_mod_fixes(self, reset_folder_structure, mocker):
         """A server manager at init should manage errors while executing mod fixes."""
@@ -176,21 +180,21 @@ class TestAServerManagerAtInit(ODKSMTest):
         mocker.patch("odk_servermanager.modfix.cba_a3.ModFixCBA.hook_init_copy_replace",
                      side_effect=broken_hook)
         mocker.patch("builtins.input", return_value="y")  # this skips the user input check
-        self._assert_aborting(self.sm.manage_instance)
+        self._assert_aborting(self.sm.manage_instance, {"config_file": self.config_file})
 
     def test_should_abort_with_more_general_errors(self, reset_folder_structure, mocker):
         """A server manager at init should abort with more general errors."""
         def broken_stuff():
             raise Exception
         mocker.patch("odk_servermanager.manager.ServerManager._ui_init", side_effect=broken_stuff)
-        self._assert_aborting(self.sm.manage_instance)
+        self._assert_aborting(self.sm.manage_instance, {"config_file": self.config_file})
 
-    def _assert_aborting(self, function):
+    def _assert_aborting(self, function, args):
         """Helper to test that the given function is actually making the manager abort."""
         from unittest.mock import patch
         with patch("odk_servermanager.manager.ServerManager._ui_abort", side_effect=self.sm._ui_abort) as abort:
             with pytest.raises(SystemExit):
-                function()
+                function(**args)
             abort.assert_called()
 
 
@@ -207,7 +211,7 @@ class TestWhenDebugging:
         ts = time.gmtime()
         debug_file_folder = test_folder_structure_path()
         debug_file = join(debug_file_folder, "odksm_{}.log".format(time.strftime("%Y%m%d_%H%M%S", ts)))
-        manager = ServerManager("debugger", debug_logs_path=debug_file_folder)
+        manager = ServerManager(debug_logs_path=debug_file_folder)
         # first check outside an exception
         manager._print_debug_log()
         assert not isfile(debug_file)
@@ -225,8 +229,8 @@ class TestWhenDebugging:
     def test_ui_abort_should_call_print_debug_log_if_needed(self, reset_folder_structure, mocker):
         """When debugging _ui_abort should call print_debug_log if needed."""
         print_logs_fun = mocker.patch("odk_servermanager.manager.ServerManager._print_debug_log")
-        manager = ServerManager("notDebugger")
-        debugger = ServerManager("Debugger", debug_logs_path="somepath")
+        manager = ServerManager()
+        debugger = ServerManager(debug_logs_path="somepath")
         with pytest.raises(SystemExit):
             manager._ui_abort()
         print_logs_fun.assert_not_called()

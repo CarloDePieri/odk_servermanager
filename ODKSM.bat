@@ -9,6 +9,8 @@ IF %1.==. GOTO No1
 
 :: If you move the ODKSM.bat remember to fill in ODKSM_ROOT_PATH: it should be the absolute path to the folder that
 :: contains the run.py file
+:: WARNING: remember that if the content of this file change with an update in the main program folder, you will need
+:: to change every file like this you moved.
 SET ODKSM_ROOT_PATH="."
 
 :: Uncomment this if you want the tool to output a log when crashing
@@ -24,9 +26,9 @@ SET LAUNCHING_DIR=%cd%
 cd "%ODKSM_ROOT_PATH%"
 
 IF "%DEBUG%"=="true" (
-    pipenv run python run.py --config "%CONFIG%" --debug-logs-path "%LAUNCHING_DIR%"
+    pipenv run python run.py --manage "%CONFIG%" --debug-logs-path "%LAUNCHING_DIR%"
 ) ELSE (
-    pipenv run python run.py --config "%CONFIG%"
+    pipenv run python run.py --manage "%CONFIG%"
 )
 
 GOTO End1

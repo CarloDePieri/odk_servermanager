@@ -2,7 +2,7 @@ import sys
 import time
 import traceback
 from os.path import join
-from typing import List
+from typing import List, Union
 
 from bs4 import BeautifulSoup
 
@@ -16,13 +16,18 @@ class ServerManager:
 
     settings: ServerInstanceSettings
     instance: ServerInstance
+    config_file: str
 
-    def __init__(self, config_file: str, debug_logs_path=None):
-        self.config_file = config_file
+    def __init__(self, debug_logs_path: Union[str, None] = None):
         self.debug_logs_path = debug_logs_path
 
-    def manage_instance(self):
+    def bootstrap(self, default_config_file: str = None) -> None:
+        """TODO"""
+        pass
+
+    def manage_instance(self, config_file: str) -> None:
         """Offer a basic ui so that the user can distinguish between instance's init and update."""
+        self.config_file = config_file
         print("\n ======[ WELCOME TO ODKSM! ]======\n")
         try:
             self._recover_settings()
