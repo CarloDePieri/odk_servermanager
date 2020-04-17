@@ -1,4 +1,5 @@
 from os.path import join, isfile, isdir, abspath
+from typing import Dict
 
 import pytest
 
@@ -61,6 +62,21 @@ class TestThePresetManager:
         assert sm.settings.fix_settings.mod_fix_settings["cba_settings"] == "tests/resources/server.cfg"
         assert sm.settings.fix_settings.enabled_fixes == ["cba_a3"]
         assert len(sm.settings.skip_keys) == 1  # this check that empty list field in config don't pollute the list
+
+    def test_should_handle_a_missing_enabled_fixes_in_the_mod_fix_settings_section(self, mocker):
+        """The preset manager should handle a missing enabled_fixes in the mod_fix_settings section."""
+        sm = ServerManager()
+        sm.config_file = join(test_resources, "config.ini")
+        # simulate a missing enabled_fixes
+        original_read_file = ConfigIni.read_file  # cache the original method before patching it
+
+        def fake_read(config_file: str) -> Dict:
+            data = original_read_file(config_file)
+            data["mod_fix_settings"].pop("enabled_fixes")
+            return data
+        mocker.patch("odk_servermanager.manager.ConfigIni.read_file",
+                     side_effect=fake_read)
+        sm._parse_config()
 
     def test_should_read_the_config_and_parse_the_preset_if_present_at_init(self):
         """The preset manager should read the config and parse the preset if present at init."""

@@ -187,7 +187,9 @@ class ServerManager:
         # Create settings containers
         config_settings = ServerConfigSettings(**data["config"])
         bat_settings = ServerBatSettings(**data["bat"])
-        enabled_fixes = data["mod_fix_settings"].pop("enabled_fixes")
+        enabled_fixes = []
+        if "enabled_fixes" in data["mod_fix_settings"]:
+            enabled_fixes = data["mod_fix_settings"].pop("enabled_fixes")
         fix_settings = ModFixSettings(enabled_fixes=enabled_fixes,
                                       mod_fix_settings=data["mod_fix_settings"])
         # create the global settings container
