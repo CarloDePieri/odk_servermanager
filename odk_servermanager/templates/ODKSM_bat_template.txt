@@ -11,7 +11,7 @@ IF %1.==. GOTO No1
 :: contains the run.py file
 :: WARNING: remember that if the content of this file change with an update in the main program folder, you will need
 :: to change every file like this you moved.
-SET ODKSM_FOLDER_PATH="."
+SET ODKSM_FOLDER_PATH="{{ odksm_folder_path }}"
 
 :: Uncomment this if you want the tool to output a log when crashing
 ::SET "DEBUG=true"

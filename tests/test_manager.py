@@ -1,8 +1,9 @@
-from os.path import join, isfile
+from os.path import join, isfile, isdir, abspath
 
 import pytest
 
 from conftest import test_preset_file_name, test_resources, test_folder_structure_path
+from odk_servermanager.config_ini import ConfigIni
 from odk_servermanager.manager import ServerManager
 from odk_servermanager.settings import ServerInstanceSettings, ServerBatSettings, ServerConfigSettings, ModFixSettings
 from odk_servermanager.modfix import MisconfiguredModFix, NonExistingFixFile, ModFix
@@ -188,6 +189,79 @@ class TestAServerManagerAtInit(ODKSMTest):
             raise Exception
         mocker.patch("odk_servermanager.manager.ServerManager._ui_init", side_effect=broken_stuff)
         self._assert_aborting(self.sm.manage_instance, {"config_file": self.config_file})
+
+    def _assert_aborting(self, function, args):
+        """Helper to test that the given function is actually making the manager abort."""
+        from unittest.mock import patch
+        with patch("odk_servermanager.manager.ServerManager._ui_abort", side_effect=self.sm._ui_abort) as abort:
+            with pytest.raises(SystemExit):
+                function(**args)
+            abort.assert_called()
+
+
+class TestWhenBootstrapping(ODKSMTest):
+    """Test: when bootstrapping..."""
+
+    @pytest.fixture(scope="class", autouse=True)
+    def setup(self, request, class_reset_folder_structure):
+        """TestWhenBootstrapping setup"""
+        request.cls.sm = ServerManager()
+        request.cls.default_file = join(test_resources, "bootstrap.ini")
+        request.cls.test_path = test_folder_structure_path()
+
+    def test_it_should_abort_if_there_are_missing_fields_in_the_default_config_ini(self, mocker):
+        """When bootstrapping it should abort if there are missing fields in the default config ini."""
+        mocker.patch("odk_servermanager.manager.ConfigIni.read_file",
+                     return_value={"bootstrap": {"odksm_folder_path": ""}})
+        self._assert_aborting(self.sm.bootstrap, {"default_config_file": self.default_file})
+        mocker.patch("odk_servermanager.manager.ConfigIni.read_file",
+                     return_value={"bootstrap": {"instances_root": ""}})
+        self._assert_aborting(self.sm.bootstrap, {"default_config_file": self.default_file})
+
+    def test_it_should_create_the_folder(self, reset_folder_structure, mocker):
+        """When bootstrapping it should create the folder."""
+        mocker.patch("builtins.input", side_effect=["training", "n"])
+        self.sm.bootstrap(self.default_file)
+        assert isdir(join(self.test_path, "training"))
+
+    def test_it_should_compile_the_config_ini_file(self, reset_folder_structure, mocker):
+        """When bootstrapping it should compile the config.ini file."""
+        mocker.patch("builtins.input", side_effect=["training", "n"])
+        self.sm.bootstrap(self.default_file)
+        instance_folder = join(self.test_path, "training")
+        config_file = join(instance_folder, "config.ini")
+        assert isfile(config_file)
+        # now try and read back that file
+        data = ConfigIni.read_file(config_file)
+        assert data["bat"]["server_max_mem"] == "8192"
+        assert data["ODKSM"]["server_instance_name"] == "training"
+        assert data["ODKSM"]["server_instance_root"] == abspath(join("tests/resources/Arma", "training"))
+
+    def test_should_compile_the_odksm_bat_file(self, reset_folder_structure, mocker):
+        """When bootstrapping should compile the odksm.bat file."""
+        mocker.patch("builtins.input", side_effect=["training", "n"])
+        self.sm.bootstrap(self.default_file)
+        instance_folder = join(self.test_path, "training")
+        bat_file = join(instance_folder, "ODKSM.bat")
+        assert isfile(bat_file)
+        with open(bat_file, "r") as f:
+            assert "path/to/odksm_folder" in f.read()
+
+    def test_should_ask_and_eventually_provide_for_custom_templates(self, reset_folder_structure,
+                                                                    mocker, have_same_content):
+        """When bootstrapping should ask and eventually provide for custom templates."""
+        mocker.patch("builtins.input", side_effect=["training", "y", "y", "y"])
+        self.sm.bootstrap(self.default_file)
+        instance_folder = join(self.test_path, "training")
+        bat_template = join(instance_folder, "run_server_template.txt")
+        config_template = join(instance_folder, "server_cfg_template.txt")
+        assert isfile(bat_template)
+        assert have_same_content(bat_template, self.sm._get_resource_file("templates/run_server_template.txt"))
+        assert isfile(config_template)
+        assert have_same_content(config_template, self.sm._get_resource_file("templates/server_cfg_template.txt"))
+        config_file = join(instance_folder, "config.ini")
+        data = ConfigIni.read_file(config_file)
+        assert data["bat"]["bat_template"] == bat_template
 
     def _assert_aborting(self, function, args):
         """Helper to test that the given function is actually making the manager abort."""

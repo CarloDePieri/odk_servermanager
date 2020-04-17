@@ -71,7 +71,7 @@ class ConfigIni:
         return json.loads(config_structure_json)
 
     @staticmethod
-    def read_file(file_path: str) -> Dict:
+    def read_file(file_path: str, bootstrap: bool = False) -> Dict:
         """Read the given file and parse and return raw settings from it."""
         config = {"mod_fix_settings": {}}
         settings = ConfigBox(reusables.config_dict(file_path))
@@ -90,4 +90,6 @@ class ConfigIni:
         config["mod_fix_settings"] = settings.mod_fix_settings.to_dict()
         if "enabled_fixes" in settings.mod_fix_settings:
             config["mod_fix_settings"]["enabled_fixes"] = settings.mod_fix_settings.list("enabled_fixes")
+        if bootstrap:
+            config["bootstrap"] = settings.bootstrap.to_dict()
         return config

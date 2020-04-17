@@ -1,15 +1,18 @@
 import sys
 import time
 import traceback
-from os.path import join
+from os import mkdir
+from os.path import join, abspath, isdir
 from typing import List, Union
 
+import pkg_resources
 from bs4 import BeautifulSoup
 
 from odk_servermanager.config_ini import ConfigIni
 from odk_servermanager.instance import ServerInstance, ModNotFound
-from odk_servermanager.settings import ServerBatSettings, ServerConfigSettings, ServerInstanceSettings, ModFixSettings
 from odk_servermanager.modfix import MisconfiguredModFix, NonExistingFixFile, ErrorInModFix
+from odk_servermanager.settings import ServerBatSettings, ServerConfigSettings, ServerInstanceSettings, ModFixSettings
+from odk_servermanager.utils import compile_from_template, copy
 
 
 class ServerManager:
@@ -22,8 +25,76 @@ class ServerManager:
         self.debug_logs_path = debug_logs_path
 
     def bootstrap(self, default_config_file: str = None) -> None:
-        """TODO"""
-        pass
+        """Interactive UI to start building a new server instance."""
+        print("\n ======[ WELCOME TO ODKSM! ]======\n")
+        try:
+            # try and read the config
+            data = ConfigIni.read_file(default_config_file, bootstrap=True)
+            # check for needed fields
+            if data["bootstrap"].get("instances_root", "") == "":
+                raise ValueError("'instances_root' field can't be empty in the [bootstrap] section!")
+            if data["bootstrap"].get("odksm_folder_path", "") == "":
+                raise ValueError("'odksm_folder_path' field can't be empty in the [bootstrap] section!")
+        except Exception as err:
+            self._ui_abort("\n [ERR] Error while reading the default config file!\n\n {}\n\n "
+                           "Check the documentation in the wiki, in the bootstrap.ini example file, in the README.md or"
+                           " in the odksm_servermanager/settings.py.\n Bye!\n".format(err))
+        try:
+            # Check the instances_root exists
+            instances_root = data["bootstrap"]["instances_root"]
+            if not isdir(instances_root):
+                raise Exception("Could not find the instances_folder '{}'".format(instances_root))
+            print("\n This utility will help you start creating your server instance.\n")
+            instance_name = input(" Choose a unique name for the instance: ")
+            # check if custom templates are needed
+            custom_bat_template_needed = False
+            custom_config_template_needed = False
+            custom_templates_needed_string = input(" Will you need custom templates? (y/n) ")
+            if custom_templates_needed_string == "y":
+                print("\n OK! Now.. \n")
+                custom_bat_template_needed_string = input(" ... will you need a custom BAT template? (y/n) ")
+                if custom_bat_template_needed_string == "y":
+                    custom_bat_template_needed = True
+                custom_config_template_needed_string = input(" ... will you need a custom CONFIG template? (y/n) ")
+                if custom_config_template_needed_string == "y":
+                    custom_config_template_needed = True
+            # create the folder
+            instance_dir = join(instances_root, instance_name)
+            mkdir(instance_dir)
+            # copy templates if needed
+            if custom_bat_template_needed:
+                bat_template_file_name = "run_server_template.txt"
+                bat_template_file = join(instance_dir, bat_template_file_name)
+                template_file = self._get_resource_file("templates/{}".format(bat_template_file_name))
+                copy(template_file, bat_template_file)
+                data["bat"]["bat_template"] = abspath(bat_template_file)
+            if custom_config_template_needed:
+                config_template_file_name = "server_cfg_template.txt"
+                config_template_file = join(instance_dir, config_template_file_name)
+                template_file = self._get_resource_file("templates/{}".format(config_template_file_name))
+                copy(template_file, config_template_file)
+                data["config"]["config_template"] = abspath(config_template_file)
+            # prepare some fields for the config file
+            data["ODKSM"]["server_instance_name"] = instance_name
+            data["ODKSM"]["server_instance_root"] = abspath(instance_dir)
+            # generate the config.ini file
+            ConfigIni().create_file(join(instance_dir, "config.ini"), data)
+            # compile the ODKSM.bat file
+            bat_template = pkg_resources.resource_string("odk_servermanager",
+                                                         "templates/ODKSM_bat_template.txt").decode("UTF-8")
+            bat_file = join(instance_dir, "ODKSM.bat")
+            compile_from_template(bat_template, bat_file, {"odksm_folder_path": data["bootstrap"]["odksm_folder_path"]})
+            print("\n Instance folder created!\n\n [WARNING] IMPORTANT! YOU ARE NOT DONE! You still need to edit the\n"
+                  " config.ini file in the folder and to run the actual ODKSM.bat tool.\n Bye!\n")
+        except Exception as err:
+            self._ui_abort("\n [ERR] Error while bootstrapping the instance!\n\n {}\n\n "
+                           "Check the documentation in the wiki, in the bootstrap.ini example file, in the README.md or"
+                           " in the odksm_servermanager/settings.py.\n Bye!\n".format(err))
+
+    @staticmethod
+    def _get_resource_file(file: str) -> str:
+        """Return the actual file path of a resource file."""
+        return pkg_resources.resource_filename('odk_servermanager', file)
 
     def manage_instance(self, config_file: str) -> None:
         """Offer a basic ui so that the user can distinguish between instance's init and update."""

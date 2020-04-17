@@ -108,3 +108,9 @@ class TestAConfigIni(ODKSMTest):
         ConfigIni().create_file(config_file, data)
         assert isfile(config_file)
         assert have_same_content(config_file, control)
+
+    def test_should_be_able_to_read_a_bootstrap_ini_file(self, reset_folder_structure):
+        """A config ini should be able to read a bootstrap.ini file."""
+        bootstrap_file = join(test_resources, "bootstrap.ini")
+        data = ConfigIni.read_file(bootstrap_file, bootstrap=True)
+        assert data["bootstrap"]["instances_root"] == "tests/resources/Arma"
