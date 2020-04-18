@@ -82,6 +82,45 @@ def have_same_content():
     return _wrapper
 
 
+@pytest.fixture()
+def patch_with_hook(mocker):
+    """This fixture is used to mock the given 'function_to_mock_name' and modify its output via a 'function_hook'.
+
+    It will call a mocker.patch() on the given 'function_to_mock_name' and apply as a side_effect a function with the
+    same signature that will first call the original, not mocked 'function_to_mock', pipe the output to 'function_hook'
+    and return the final chained output.
+    It can work with methods, but the 'function_to_mock' must be a bound function, meaning that it must be passed as
+    object.method, NOT as class.method.
+
+    function_to_mock: the actual function or method to be mocked
+    function_to_mock_name: the name of the function that will be passed to patch. Remember: the location is relevant!
+    function_hook: this is the function that will take the original function output as input (so it must be built
+                    accordingly) and can then modify it.
+    """
+    def _wrapper(function_to_mock: Callable, function_to_mock_name: str, function_hook: Callable):
+        from inspect import signature
+
+        def copy_signature(source_fct):
+            """Decorator used to mock a function signature."""
+            def copy(target_fct):
+                target_fct.__signature__ = signature(source_fct)
+                return target_fct
+            return copy
+
+        @copy_signature(function_to_mock)
+        def mocked_function(*args, **kwds):
+            """A function with the same signature as 'function_to_mock', that calls it and concatenate the results into
+            'function_hook', returning the final result."""
+            # assert that arguments are correct: this improve clarity of eventual errors
+            signature(mocked_function).bind(*args, **kwds)
+            # now concatenate the original function with the hook and return it
+            return function_hook(function_to_mock(*args, **kwds))
+
+        # now actually mock the function_to_mock
+        mocker.patch(function_to_mock_name, side_effect=mocked_function)
+    return _wrapper
+
+
 # Test stubs
 def sb_stub_obj() -> ServerBatSettings:
     return ServerBatSettings("title", "2000", r"serverConfig.cfg", r"serverCfg.cfg", "128")
