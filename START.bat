@@ -2,10 +2,10 @@
 ::                                                                                           |
 ::                                 == ODK SERVER MANAGER ==                                  |
 ::                                                                                           |
-::      Use this bat to launch the tool. Remember to pass in a config.ini file to it!        |
+:: Use this bat to start creating a new instance! Remember you still have work to do inside  |
+:: the newly created folder instance after this.                                             |
 ::--------------------------------------------------------------------------------------------
 @echo off
-IF %1.==. GOTO No1
 
 :: If you move the ODKSM.bat remember to fill in ODKSM_FOLDER_PATH: it should be the absolute path to the folder that
 :: contains the run.py file
@@ -13,11 +13,15 @@ IF %1.==. GOTO No1
 :: to change every file like this you moved.
 SET ODKSM_FOLDER_PATH="."
 
+:: This is the ini file that contains the [bootstrap] section and default fields for a new instance
+SET DEFAULT_CONFIG="bootstrap.ini"
+
 :: Uncomment this if you want the tool to output a log when crashing
 ::SET "DEBUG=true"
 
 :: Recover the config file absolute path
-SET CONFIG=%~dpfn1
+CALL :NORMALIZEPATH %DEFAULT_CONFIG%
+SET DEFAULT_CONFIG=%RETVAL%
 
 :: Save the pwd for later
 SET LAUNCHING_DIR=%cd%
@@ -26,22 +30,15 @@ SET LAUNCHING_DIR=%cd%
 cd "%ODKSM_FOLDER_PATH%"
 
 IF "%DEBUG%"=="true" (
-    pipenv run python run.py --manage "%CONFIG%" --debug-logs-path "%LAUNCHING_DIR%"
+    pipenv run python run.py --bootstrap "%DEFAULT_CONFIG%" --debug-logs-path "%LAUNCHING_DIR%"
 ) ELSE (
-    pipenv run python run.py --manage "%CONFIG%"
+    pipenv run python run.py --bootstrap "%DEFAULT_CONFIG%"
 )
 
-GOTO End1
-
-:No1
-  ECHO.
-  ECHO ======[ WELCOME TO ODKSM! ]======
-  ECHO.
-  ECHO [ERR] You tried to call this program directly :(
-  ECHO You need to pass in a config file as first argument, either by cmd, batch file or drag^&drop.
-  ECHO.
-  ECHO Bye!
-  ECHO.
-
-:End1
 PAUSE
+
+:: ------------- Functions
+
+:NORMALIZEPATH
+    SET RETVAL=%~dpfn1
+    EXIT /B

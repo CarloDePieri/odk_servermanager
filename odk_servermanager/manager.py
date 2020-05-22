@@ -1,24 +1,104 @@
-from typing import List
+import sys
+import time
+import traceback
+from os import mkdir
+from os.path import join, abspath, isdir
+from typing import List, Union
 
-import reusables
-from box import ConfigBox
+import pkg_resources
 from bs4 import BeautifulSoup
 
+from odk_servermanager.config_ini import ConfigIni
 from odk_servermanager.instance import ServerInstance, ModNotFound
-from odk_servermanager.settings import ServerBatSettings, ServerConfigSettings, ServerInstanceSettings, ModFixSettings
 from odk_servermanager.modfix import MisconfiguredModFix, NonExistingFixFile, ErrorInModFix
+from odk_servermanager.settings import ServerBatSettings, ServerConfigSettings, ServerInstanceSettings, ModFixSettings
+from odk_servermanager.utils import compile_from_template, copy
 
 
 class ServerManager:
 
     settings: ServerInstanceSettings
     instance: ServerInstance
+    config_file: str
 
-    def __init__(self, config_file: str):
-        self.config_file = config_file
+    def __init__(self, debug_logs_path: Union[str, None] = None):
+        self.debug_logs_path = debug_logs_path
 
-    def manage_instance(self):
+    def bootstrap(self, default_config_file: str = None) -> None:
+        """Interactive UI to start building a new server instance."""
+        print("\n ======[ WELCOME TO ODKSM! ]======\n")
+        try:
+            # try and read the config
+            data = ConfigIni.read_file(default_config_file, bootstrap=True)
+            # check for needed fields
+            if data["bootstrap"].get("instances_root", "") == "":
+                raise ValueError("'instances_root' field can't be empty in the [bootstrap] section!")
+            if data["bootstrap"].get("odksm_folder_path", "") == "":
+                raise ValueError("'odksm_folder_path' field can't be empty in the [bootstrap] section!")
+        except Exception as err:
+            self._ui_abort("\n [ERR] Error while reading the default config file!\n\n {}\n\n "
+                           "Check the documentation in the wiki, in the bootstrap.ini example file, in the README.md or"
+                           " in the odksm_servermanager/settings.py.\n Bye!\n".format(err))
+        try:
+            # Check the instances_root exists
+            instances_root = data["bootstrap"]["instances_root"]
+            if not isdir(instances_root):
+                raise Exception("Could not find the instances_folder '{}'".format(instances_root))
+            print("\n This utility will help you start creating your server instance.\n")
+            instance_name = input(" Choose a unique name for the instance: ")
+            # check if custom templates are needed
+            custom_bat_template_needed = False
+            custom_config_template_needed = False
+            custom_templates_needed_string = input(" Will you need custom templates? (y/n) ")
+            if custom_templates_needed_string == "y":
+                print("\n OK! Now.. \n")
+                custom_bat_template_needed_string = input(" ... will you need a custom BAT template? (y/n) ")
+                if custom_bat_template_needed_string == "y":
+                    custom_bat_template_needed = True
+                custom_config_template_needed_string = input(" ... will you need a custom CONFIG template? (y/n) ")
+                if custom_config_template_needed_string == "y":
+                    custom_config_template_needed = True
+            # create the folder
+            instance_dir = join(instances_root, instance_name)
+            mkdir(instance_dir)
+            # copy templates if needed
+            if custom_bat_template_needed:
+                bat_template_file_name = "run_server_template.txt"
+                bat_template_file = join(instance_dir, bat_template_file_name)
+                template_file = self._get_resource_file("templates/{}".format(bat_template_file_name))
+                copy(template_file, bat_template_file)
+                data["bat"]["bat_template"] = abspath(bat_template_file)
+            if custom_config_template_needed:
+                config_template_file_name = "server_cfg_template.txt"
+                config_template_file = join(instance_dir, config_template_file_name)
+                template_file = self._get_resource_file("templates/{}".format(config_template_file_name))
+                copy(template_file, config_template_file)
+                data["config"]["config_template"] = abspath(config_template_file)
+            # prepare some fields for the config file
+            data["ODKSM"]["server_instance_name"] = instance_name
+            data["ODKSM"]["server_instance_root"] = abspath(instance_dir)
+            # generate the config.ini file
+            ConfigIni().create_file(join(instance_dir, "config.ini"), data)
+            # compile the ODKSM.bat file
+            bat_template = pkg_resources.resource_string("odk_servermanager",
+                                                         "templates/ODKSM_bat_template.txt").decode("UTF-8")
+            bat_file = join(instance_dir, "ODKSM.bat")
+            compile_from_template(bat_template, bat_file, {"odksm_folder_path": data["bootstrap"]["odksm_folder_path"]})
+            print("\n Instance folder created!\n\n [WARNING] IMPORTANT! YOU ARE NOT DONE! You still need to edit the\n"
+                  " config.ini file in the folder and to run the actual ODKSM.bat tool.\n Bye!\n")
+        except Exception as err:
+            self._ui_abort("\n [ERR] Error while bootstrapping the instance!\n\n {}\n\n "
+                           "Check the documentation in the wiki, in the bootstrap.ini example file, in the README.md or"
+                           " in the odksm_servermanager/settings.py.\n Bye!\n".format(err))
+
+    @staticmethod
+    def _get_resource_file(file: str) -> str:
+        """Return the actual file path of a resource file."""
+        return pkg_resources.resource_filename('odk_servermanager', file)
+
+    def manage_instance(self, config_file: str) -> None:
         """Offer a basic ui so that the user can distinguish between instance's init and update."""
+        self.config_file = config_file
         print("\n ======[ WELCOME TO ODKSM! ]======\n")
         try:
             self._recover_settings()
@@ -80,9 +160,10 @@ class ServerManager:
             for warn in self.instance.warnings:
                 print(" [WARN] {}".format(warn))
 
-    @staticmethod
-    def _ui_abort(message: str = "\n [ABORTED] Bye!\n") -> None:
+    def _ui_abort(self, message: str = "\n [ABORTED] Bye!\n") -> None:
         """Print the given message and quit the program."""
+        if self.debug_logs_path is not None:
+            self._print_debug_log()
         print(message)
         exit(1)
 
@@ -94,32 +175,25 @@ class ServerManager:
     def _recover_settings(self):
         """Recover all needed settings, including mods presets."""
         self._parse_config()
-        if "user_mods_preset" in self.settings:
+        if self.settings.user_mods_preset != "":
             mods = self._parse_mods_preset(self.settings.user_mods_preset)
             # do not use shorthand += here: there's a bug in Box that will break things
             self.settings.user_mods_list = self.settings.user_mods_list + mods
 
     def _parse_config(self) -> None:
         """Parse the config file and create all settings container object."""
-        settings = ConfigBox(reusables.config_dict(self.config_file))
-        # compose the bat settings container
-        bat_settings = ServerBatSettings(**settings.bat.to_dict())
-        # compose the config settings container
-        config_settings = ServerConfigSettings(**settings.config.to_dict())
-        # fix list element in odksm settings
-        for el in ["user_mods_list", "mods_to_be_copied", "server_mods_list", "skip_keys"]:
-            if el in settings.ODKSM:
-                el_list = settings.ODKSM.list(el)
-                settings.ODKSM[el] = list(filter(lambda x: x != "", el_list))
-        # check for mod_fix
+        # Recover data in the file
+        data = ConfigIni.read_file(self.config_file)
+        # Create settings containers
+        config_settings = ServerConfigSettings(**data["config"])
+        bat_settings = ServerBatSettings(**data["bat"])
         enabled_fixes = []
-        if "enabled_fixes" in settings.mod_fix_settings:
-            enabled_fixes = settings.mod_fix_settings.list("enabled_fixes")
-            settings.mod_fix_settings.pop("enabled_fixes")  # delete the enabled_fixes from there
-        mod_fix_settings = settings.mod_fix_settings.to_dict()
-        fix_settings = ModFixSettings(enabled_fixes=enabled_fixes, mod_fix_settings=mod_fix_settings)
-        # create the settings container
-        self.settings = ServerInstanceSettings(**settings.ODKSM.to_dict(),
+        if "enabled_fixes" in data["mod_fix_settings"]:
+            enabled_fixes = data["mod_fix_settings"].pop("enabled_fixes")
+        fix_settings = ModFixSettings(enabled_fixes=enabled_fixes,
+                                      mod_fix_settings=data["mod_fix_settings"])
+        # create the global settings container
+        self.settings = ServerInstanceSettings(**data["ODKSM"],
                                                bat_settings=bat_settings, config_settings=config_settings,
                                                fix_settings=fix_settings)
         # add missing mod_fix mods to mods_to_be_copied
@@ -153,3 +227,18 @@ class ServerManager:
     def _display_name_filter(name: str) -> str:
         """Fix some display names peculiarities."""
         return name.replace(":", "-")
+
+    def _print_debug_log(self):
+        """Print in a log file the stacktrace."""
+        if self.debug_logs_path is not None and self._are_in_exception():
+            # Recover the traceback
+            tb = traceback.format_exc()
+            log_name = "odksm_{}.log".format(time.strftime("%Y%m%d_%H%M%S", time.gmtime()))
+            log_file = join(self.debug_logs_path, log_name)
+            with open(log_file, "w+") as log:
+                log.write(tb)
+
+    @staticmethod
+    def _are_in_exception():
+        """Return true if we are currently handling an exception"""
+        return sys.exc_info() != (None, None, None)

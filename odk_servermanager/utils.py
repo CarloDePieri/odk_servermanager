@@ -1,6 +1,7 @@
 import shutil
-from os.path import isdir, abspath
-from typing import Dict
+from os import listdir
+from os.path import isdir, abspath, join
+from typing import Dict, List
 
 
 def symlink(source: str, link_name: str) -> None:
@@ -48,3 +49,9 @@ def compile_from_template(template_file_content: str, compiled_file: str, settin
     compiled = template.render(settings)
     with open(compiled_file, "w+") as f:
         f.write(compiled)
+
+
+def symlink_everything_from_folder(origin: str, target: str, exception: List[str] = []) -> None:
+    """Symlink every file and folder from a 'origin' folder to a 'target' folder. Accept an exception list."""
+    for el in filter(lambda x: x not in exception, listdir(origin)):
+        symlink(join(origin, el), join(target, el))

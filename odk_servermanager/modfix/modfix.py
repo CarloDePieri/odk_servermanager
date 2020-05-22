@@ -4,7 +4,7 @@ from os.path import isfile, join
 from typing import Callable, Union, List
 from odk_servermanager.instance import ServerInstance
 
-HOOK_TYPE = Union[Callable[[ServerInstance], None], None]
+HOOK_TYPE = Union[Callable[[ServerInstance, List[str]], None], None]
 
 
 class ModFix:
@@ -26,7 +26,7 @@ class ModFix:
     :hook_update_link_replace: This hook gets called instead of the usual mod update link.
     :hook_update_link_post: This hook gets called after the mod update link ends.
 
-    TAKE NOTICE: DO NOT OVERWRITE hook_caller. It's the wrapper used to to call hooks and manage errors.
+    TAKE NOTICE: DO NOT OVERRIDE hook_caller. It's the wrapper used to to call hooks and manage errors.
     """
     name: str = ""
     hook_init_copy_pre: HOOK_TYPE = None
@@ -42,13 +42,35 @@ class ModFix:
     hook_update_link_replace: HOOK_TYPE = None
     hook_update_link_post: HOOK_TYPE = None
 
-    def hook_caller(self, hook_name: str, server_instance: ServerInstance) -> None:
-        """DO NOT OVERWRITE THIS METHOD. Wrapper to manage errors in hook execution."""
+    def hook_caller(self, hook_name: str, server_instance: ServerInstance, call_data: List[str]) -> None:
+        """DO NOT OVERRIDE THIS METHOD. Wrapper to manage errors in hook execution."""
         try:
-            getattr(self, "hook_{}".format(hook_name))(server_instance)
+            getattr(self, "hook_{}".format(hook_name))(server_instance, call_data)
         except Exception:
             # This is intentionally broad to defend against all kind of errors inside user mod fix
             raise ErrorInModFix("Error when executing the '{}' mod fix.".format(self.name))
+
+    def does_apply_to_mod(self, mod_name: str) -> bool:
+        """Return True if this modfix apply to the given mod name.
+
+        This is simply checked against the modfix name.
+        Modfixes can overwrite this behavior."""
+        return self.name == mod_name
+
+    def update_mods_to_be_copied_list(self, mods_to_be_copied_list: List[str],
+                                      user_mods_list: List[str], server_mods_list: List[str]) -> None:
+        """Update the given mods_to_be_copied list with this mods name if needed."""
+        if (self.name in user_mods_list or self.name in server_mods_list) and \
+                self._modfix_has_copy_hooks() and self.name not in mods_to_be_copied_list:
+            mods_to_be_copied_list.append(self.name)
+
+    def _modfix_has_copy_hooks(self) -> bool:
+        """Return True if the modfix has any copy hook set."""
+        for hook in [self.hook_init_copy_pre, self.hook_init_copy_replace, self.hook_init_copy_post,
+                     self.hook_update_copy_pre, self.hook_update_copy_replace, self.hook_update_copy_post]:
+            if hook is not None:
+                return True
+        return False
 
 
 def register_fixes(enabled_fixes: List[str]) -> List[ModFix]:

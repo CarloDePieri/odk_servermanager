@@ -156,8 +156,9 @@ class TestOurTestServerInstance(ODKSMTest):
         with pytest.raises(DuplicateServerName):
             self.instance._new_server_folder()
 
-    def test_should_symlink_and_create_all_needed_stuff_from_the_main_folder(self, reset_folder_structure):
+    def test_should_symlink_and_create_all_needed_stuff_from_the_main_folder(self, reset_folder_structure, mocker):
         """Create instance should symlink and create all needed stuff from the main folder."""
+        mocker.patch.object(self.instance, "arma_keys", self.instance.arma_keys + ["not-there.bikey"])
         server_folder = join(self.test_path, "__server__" + self.instance.S.server_instance_name)
         mkdir(join(self.test_path, "__odksm__"))
         self.instance._prepare_server_core()
@@ -181,9 +182,10 @@ class TestOurTestServerInstance(ODKSMTest):
         # Check keys
         keys_folder = join(server_folder, "Keys")
         assert isdir(keys_folder) and not islink(keys_folder)
-        assert isfile(join(keys_folder, "a3.bikey"))
-        assert isfile(join(keys_folder, "a3c.bikey"))
-        assert isfile(join(keys_folder, "gm.bikey"))
+        assert islink(join(keys_folder, "a3.bikey"))
+        assert islink(join(keys_folder, "a3c.bikey"))
+        assert islink(join(keys_folder, "gm.bikey"))
+        assert not islink(join(keys_folder, "not-there.bikey"))
         # Check userconfig dir
         assert isdir(join(server_folder, "userconfig"))
 
@@ -247,8 +249,8 @@ class TestOurTestServerInstance(ODKSMTest):
         # end setup, begin actual test
         self.instance._link_keys()
         keys_folder_files = listdir(keys_folder)
-        assert len(keys_folder_files) == len(self.instance.S.user_mods_list) + len(
-            self.instance.S.server_mods_list) + len(self.instance.arma_keys)
+        # now check the copied keys - beware, no server mods keys!
+        assert len(keys_folder_files) == len(self.instance.S.user_mods_list) + len(self.instance.arma_keys)
 
     def test_should_skip_a_key_already_present_when_linking_them(self, reset_folder_structure):
         """Our test server instance should skip a key already present when linking them."""
@@ -475,6 +477,42 @@ class TestOurTestServerInstance(ODKSMTest):
         clear_mod_fun.assert_called_once()
         copy_fun.assert_called_once()
 
+    def test_should_be_able_to_skip_keys_when_linking_them(self, reset_folder_structure, mocker):
+        """Our test server instance should be able to skip keys when linking them."""
+        self.instance._prepare_server_core()
+        mocker.patch.object(self.instance.S, "mods_to_be_copied", [])
+        mocker.patch.object(self.instance.S, "user_mods_list", ["ace"])
+        mocker.patch.object(self.instance.S, "skip_keys", ["ace"])
+        self.instance._symlink_mod("ace")
+        self.instance._link_keys()
+        keys_folder = join(self.instance.get_server_instance_path(), self.instance.keys_folder_name)
+        keys_folder_files = listdir(keys_folder)
+        assert len(keys_folder_files) == len(self.instance.arma_keys)
+
+    def test_should_manage_empty_keys_folder_inside_a_mod_folder(self, reset_folder_structure, mocker):
+        """Our test server instance should manage empty keys folder inside a mod folder."""
+        mod_root_folder = join(self.test_path, "testMods")
+        mkdir(mod_root_folder)
+        mkdir(join(mod_root_folder, "ModA"))
+        mkdir(join(mod_root_folder, "ModA", "Keys"))
+        mocker.patch.object(self.instance, "_should_link_mod_key", lambda x: True)
+        self.instance._link_keys_in_folder(mod_root_folder)  # this should not raise exception, but simply skip
+
+    def test_should_manage_multiple_keys_per_mod(self, reset_folder_structure, mocker):
+        """Our test server instance should manage multiple keys per mod."""
+        mod_root_folder = join(self.test_path, "testMods")
+        mkdir(mod_root_folder)
+        mkdir(join(mod_root_folder, "ModA"))
+        mkdir(join(mod_root_folder, "ModA", "Keys"))
+        touch(join(mod_root_folder, "ModA", "Keys", "keya.bikey"))
+        touch(join(mod_root_folder, "ModA", "Keys", "keyb.bikey"))
+        mocker.patch.object(self.instance, "_should_link_mod_key", lambda x: True)
+        instance_key_folder = join(self.instance.get_server_instance_path(), "Keys")
+        mkdir(instance_key_folder)
+        self.instance._link_keys_in_folder(mod_root_folder)
+        assert islink(join(instance_key_folder, "keya.bikey"))
+        assert islink(join(instance_key_folder, "keyb.bikey"))
+
 
 class TestServerInstanceInit(ODKSMTest):
     """Test: ServerInstance init..."""
@@ -533,13 +571,12 @@ class TestServerInstanceInit(ODKSMTest):
         assert isdir(join(self.instance_folder, self.instance.S.copied_mod_folder_name, "@CBA_A3"))
         assert islink(join(self.instance_folder, self.instance.S.linked_mod_folder_name, "@ace"))
 
-    def test_should_symlink_all_mods_keys(self):
-        """Server instance init should symlink all mods keys."""
+    def test_should_symlink_all_user_mods_keys(self):
+        """Server instance init should symlink all user mods keys."""
         self.init_keys_fun.assert_called()
         keys_folder = join(self.instance.get_server_instance_path(), self.instance.keys_folder_name)
         keys_folder_files = listdir(keys_folder)
-        assert len(keys_folder_files) == len(self.instance.S.user_mods_list) + len(
-            self.instance.S.server_mods_list) + len(self.instance.arma_keys)
+        assert len(keys_folder_files) == len(self.instance.S.user_mods_list) + len(self.instance.arma_keys)
 
     def test_should_generate_the_bat_file(self):
         """Server instance init should generate the bat file."""

@@ -20,6 +20,8 @@ class ServerInstance:
         self.S = settings
         from odk_servermanager.modfix import register_fixes
         self.registered_fix = register_fixes(enabled_fixes=self.S.fix_settings.enabled_fixes)
+        for fix in self.registered_fix:
+            fix.update_mods_to_be_copied_list(self.S.mods_to_be_copied, self.S.user_mods_list, self.S.server_mods_list)
 
     def get_server_instance_path(self) -> str:
         """Return the server instance path."""
@@ -62,7 +64,8 @@ class ServerInstance:
         for key in self.arma_keys:
             arma_key_folder = join(self.S.arma_folder, self.keys_folder_name)
             instance_key_folder = join(server_folder, self.keys_folder_name)
-            symlink(join(arma_key_folder, key), join(instance_key_folder, key))
+            if isfile(join(arma_key_folder, key)):
+                symlink(join(arma_key_folder, key), join(instance_key_folder, key))
 
     def _symlink_mod(self, mod_name) -> None:
         """Symlink a single mod in the linked mod folder."""
@@ -106,23 +109,24 @@ class ServerInstance:
     def _apply_hooks_and_do_op(self, stage: str, operation: str, mod_name: str) -> None:
         """Method that calls hooks if present, otherwise call _do_default_op."""
         # Check if mod fixes are registered for this mod
-        mod_fix = list(filter(lambda x: x.name == mod_name, self.registered_fix))
+        mod_fix = list(filter(lambda x: x.does_apply_to_mod(mod_name), self.registered_fix))
         mod_fix = mod_fix[0] if len(mod_fix) > 0 else None
-        # Compose the hooks names
+        # Compose the hooks names and call data
         pre_hook_name = "{}_{}_pre".format(stage, operation)
         replace_hook_name = "{}_{}_replace".format(stage, operation)
         post_hook_name = "{}_{}_post".format(stage, operation)
+        call_data = [stage, operation, mod_name]
         # If available, call its pre hook
         if mod_fix is not None and getattr(mod_fix, "hook_{}".format(pre_hook_name)) is not None:
-            mod_fix.hook_caller(pre_hook_name, self)
+            mod_fix.hook_caller(pre_hook_name, self, call_data)
         # If available, call its replace hook, else execute the correct function
         if mod_fix is not None and getattr(mod_fix, "hook_{}".format(replace_hook_name)) is not None:
-            mod_fix.hook_caller(replace_hook_name, self)
+            mod_fix.hook_caller(replace_hook_name, self, call_data)
         else:
             self._do_default_op(stage, operation, mod_name)
         # If available, call its post hook
         if mod_fix is not None and getattr(mod_fix, "hook_{}".format(post_hook_name)) is not None:
-            mod_fix.hook_caller(post_hook_name, self)
+            mod_fix.hook_caller(post_hook_name, self, call_data)
 
     def _do_default_op(self, stage: str, operation: str, mod_name: str) -> None:
         """Perform default link and copy operation, both on init and on update."""
@@ -210,21 +214,26 @@ class ServerInstance:
         file_ext = splitext(filename)[-1].lower()
         return (isfile(filename) or islink(filename)) and (file_ext == ".bikey")
 
-    def _link_keys_in_folder(self, folder: str) -> None:
-        """Link alla keys from the mod in the given folder to the instance keys folder."""
-        for mod_folder_name in filter(lambda x: x not in self.S.skip_keys, listdir(folder)):
-            mod_folder = abspath(join(folder, mod_folder_name))
+    def _link_keys_in_folder(self, mods_root_folder: str) -> None:
+        """Link all keys from the mods in the given folder to the instance keys folder."""
+        for mod_folder_name in filter(lambda x: self._should_link_mod_key(x[1:]), listdir(mods_root_folder)):
+            mod_folder = abspath(join(mods_root_folder, mod_folder_name))
             # look for the key folder there
             key_folder = list(filter(lambda name: name.lower() == "keys" or name.lower() == "key", listdir(mod_folder)))
             if len(key_folder) > 0:
                 # if there's one, the key inside needs to be linked over the main key folder
                 mod_key_folder = join(mod_folder, key_folder[0])
-                key_file = list(filter(lambda x: self._is_keyfile(join(mod_key_folder, x)), listdir(mod_key_folder)))[0]
-                src = join(mod_key_folder, key_file)
-                dest = join(self.get_server_instance_path(), self.keys_folder_name, key_file)
-                # check if the key is already there
-                if not islink(dest):
-                    symlink(src, dest)
+                key_files = list(filter(lambda x: self._is_keyfile(join(mod_key_folder, x)), listdir(mod_key_folder)))
+                for key_file in key_files:
+                    src = join(mod_key_folder, key_file)
+                    dest = join(self.get_server_instance_path(), self.keys_folder_name, key_file)
+                    # check if the key is already there
+                    if not islink(dest):
+                        symlink(src, dest)
+
+    def _should_link_mod_key(self, mod_name: str) -> bool:
+        """Check whether a mod key should be linked."""
+        return mod_name in self.S.user_mods_list and mod_name not in self.S.skip_keys
 
     def _link_keys(self) -> None:
         """Link all keys from the copied and the linked mod folders to the instance keys folder."""

@@ -1,5 +1,6 @@
 from os import unlink
 from os.path import join, abspath, islink
+from typing import List
 
 from odk_servermanager.instance import ServerInstance
 from odk_servermanager.modfix import ModFix
@@ -7,19 +8,20 @@ from odk_servermanager.utils import symlink
 
 
 class ModFixODKAILocal(ModFix):
-    """ModFix for the mod 'ODKAI'. It allows us to use a local copy of the mod while we develop it."""
+    """ModFix for the mod 'ODKAI'. It allows us to use a local copy of the mod while we develop it.
+
+    REQUIRED SETTINGS IN [mod_fix_settings] SECTION
+    -----------------------------------------------
+    :odkai_local_path: the full path of the folder containing the mod
+    """
 
     name: str = "ODKAI"
 
-    def hook_init_link_replace(self, server_instance: ServerInstance) -> None:
-        """Used to symlink a local version of ODKAI in the instance.
-
-        This hook will look for following fields in mod_fix_settings:
-        :odkai_local_path: the full path of the folder containing the mod
-        """
+    def hook_init_link_replace(self, server_instance: ServerInstance, call_data: List[str]) -> None:
+        """Used to symlink a local version of ODKAI in the instance."""
         self._link_local_copy(server_instance)
 
-    def hook_update_link_replace(self, server_instance: ServerInstance) -> None:
+    def hook_update_link_replace(self, server_instance: ServerInstance, call_data: List[str]) -> None:
         """Make sure the local copy is symlinked."""
         mod_folder = join(server_instance.get_server_instance_path(), server_instance.S.linked_mod_folder_name,
                           "@" + self.name)

@@ -56,10 +56,10 @@ class TestAModFix(ODKSMTest):
 class TestAServerInstance(ODKSMTest):
     """Test: A Server Instance ..."""
 
-    def dummy_hook(self, server_instance):
+    def dummy_hook(self, server_instance, call_data):
         pass
 
-    def broken_hook(self, server_instance):
+    def broken_hook(self, server_instance, call_data):
         raise Exception
 
     @pytest.fixture(autouse=True)
@@ -67,7 +67,7 @@ class TestAServerInstance(ODKSMTest):
         """TestAServerInstance setup"""
         request.cls.test_path = test_folder_structure_path()
         request.cls.enabled_fixes = ["cba_a3"]
-        settings = ServerInstanceSettings("test", sb_stub, sc_stub, user_mods_list=["ace"], mods_to_be_copied=["ace"],
+        settings = ServerInstanceSettings("test", sb_stub, sc_stub, user_mods_list=["ace"],
                                           fix_settings=ModFixSettings(enabled_fixes=self.enabled_fixes),
                                           arma_folder=self.test_path, server_instance_root=self.test_path)
         request.cls.instance = ServerInstance(settings)
@@ -85,20 +85,56 @@ class TestAServerInstance(ODKSMTest):
     @pytest.mark.parametrize("stage", ["update", "init"])
     def test_should_call_its_hooks(self, time, operation, stage, mocker):
         """A server instance should call its hooks."""
+        mod_name = "CBA_A3"
+
         class ModFixTest(ModFix):
-            name = "CBA_A3"
+            name = mod_name
         mf = ModFixTest()
         hook_name = "hook_{}_{}_{}".format(stage, operation, time)
         mf.__setattr__(hook_name, self.dummy_hook)
         hook = mocker.patch.object(mf, hook_name, side_effect=mf.__getattribute__(hook_name))
         default_op = mocker.patch.object(self.instance, "_do_default_op", side_effect=self.instance._do_default_op)
         self.instance.registered_fix = [mf]
-        self.instance._apply_hooks_and_do_op(stage, operation, "CBA_A3")
-        hook.assert_called_with(self.instance)
+        self.instance._apply_hooks_and_do_op(stage, operation, mod_name)
+        call_data = [stage, operation, mod_name]
+        hook.assert_called_with(self.instance, call_data)
         if time == "replace":
             default_op.assert_not_called()
         else:
             default_op.assert_called()
         mf.__setattr__(hook_name, self.broken_hook)
         with pytest.raises(ErrorInModFix):
-            self.instance._apply_hooks_and_do_op(stage, operation, "CBA_A3")
+            self.instance._apply_hooks_and_do_op(stage, operation, mod_name)
+
+
+class TestACopyModFix(ODKSMTest):
+    """Test: ACopyModFix..."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, request, reset_folder_structure, sc_stub, sb_stub, mocker):
+        """TestACopyModFix setup"""
+        class LinkModFix(ModFix):
+
+            name = "ace"
+
+            def hook_init_link_pre(self, server_instance, call_data) -> None:
+                pass
+
+        class CopyModFix(ModFix):
+
+            name = "cba_a3"
+
+            def hook_init_copy_pre(self, server_instance, call_data) -> None:
+                pass
+        request.cls.test_path = test_folder_structure_path()
+        settings = ServerInstanceSettings("test", sb_stub, sc_stub, user_mods_list=["cba_a3", "ace"],
+                                          fix_settings=ModFixSettings(enabled_fixes=["cba_a3", "ace"]),
+                                          arma_folder=self.test_path, server_instance_root=self.test_path)
+        mocker.patch("odk_servermanager.modfix.register_fixes", return_value=[CopyModFix(), LinkModFix()])
+        request.cls.instance = ServerInstance(settings)
+
+    def test_should_put_the_mod_in_mods_to_be_copied_if_needed(self, reset_folder_structure):
+        """A server instance should put the mod in mods_to_be_copied if needed."""
+        assert "cba_a3" in self.instance.S.mods_to_be_copied
+        assert "ace" not in self.instance.S.mods_to_be_copied
+
