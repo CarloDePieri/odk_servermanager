@@ -4,7 +4,7 @@ from os.path import isfile, join
 from typing import Callable, Union, List
 from odk_servermanager.instance import ServerInstance
 
-HOOK_TYPE = Union[Callable[[ServerInstance], None], None]
+HOOK_TYPE = Union[Callable[[ServerInstance, List[str]], None], None]
 
 
 class ModFix:
@@ -26,7 +26,7 @@ class ModFix:
     :hook_update_link_replace: This hook gets called instead of the usual mod update link.
     :hook_update_link_post: This hook gets called after the mod update link ends.
 
-    TAKE NOTICE: DO NOT OVERWRITE hook_caller. It's the wrapper used to to call hooks and manage errors.
+    TAKE NOTICE: DO NOT OVERRIDE hook_caller. It's the wrapper used to to call hooks and manage errors.
     """
     name: str = ""
     hook_init_copy_pre: HOOK_TYPE = None
@@ -43,7 +43,7 @@ class ModFix:
     hook_update_link_post: HOOK_TYPE = None
 
     def hook_caller(self, hook_name: str, server_instance: ServerInstance, call_data: List[str]) -> None:
-        """DO NOT OVERWRITE THIS METHOD. Wrapper to manage errors in hook execution."""
+        """DO NOT OVERRIDE THIS METHOD. Wrapper to manage errors in hook execution."""
         try:
             getattr(self, "hook_{}".format(hook_name))(server_instance, call_data)
         except Exception:
