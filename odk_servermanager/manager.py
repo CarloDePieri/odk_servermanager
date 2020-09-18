@@ -226,7 +226,7 @@ class ServerManager:
     @staticmethod
     def _display_name_filter(name: str) -> str:
         """Fix some display names peculiarities."""
-        return name.replace(":", "-")
+        return name.replace(":", "-").replace("/", "-")
 
     def _print_debug_log(self):
         """Print in a log file the stacktrace."""

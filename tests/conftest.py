@@ -11,6 +11,7 @@ from odk_servermanager.settings import ServerBatSettings, ServerConfigSettings
 
 test_resources = join("tests", "resources")
 test_preset_file_name = join(test_resources, "preset.html")
+test_preset_tofix_file_name = join(test_resources, "preset-tofix.html")
 test_folder_structure_name = join(test_resources, "Arma")
 test_folder_structure_zip = join(test_resources, "folder_structure.zip")
 
@@ -76,7 +77,7 @@ def assert_requires_arguments():
 @pytest.fixture()
 def have_same_content():
     """Helper fixture checking files content equality."""
-    def _wrapper(first_file_path: str, second_file_path:str) -> bool:
+    def _wrapper(first_file_path: str, second_file_path: str) -> bool:
         with open(first_file_path, "r") as first, open(second_file_path, "r") as second:
             return first.read() == second.read()
     return _wrapper

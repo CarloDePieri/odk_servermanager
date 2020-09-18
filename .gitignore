@@ -5,3 +5,4 @@ tests/resources/Arma
 .idea
 odksm.iml
 .coverage
+odk_servermanager/__pycache__/
