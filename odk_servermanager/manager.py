@@ -213,7 +213,7 @@ class ServerManager:
     def _parse_mods_preset(self, filename: str) -> List[str]:
         """Parse an Arma 3 preset and return the List of all selected mods names."""
         # Open the preset file and read its content
-        with open(filename, "r") as f:
+        with open(filename, "r", encoding='utf-8') as f:
             xml = f.read()
         # Parse the file and extract all mods names
         parsed_xml = BeautifulSoup(xml, 'html.parser')
@@ -226,7 +226,7 @@ class ServerManager:
     @staticmethod
     def _display_name_filter(name: str) -> str:
         """Fix some display names peculiarities."""
-        return name.replace(":", "-")
+        return name.replace(":", "-").replace("/", "-")
 
     def _print_debug_log(self):
         """Print in a log file the stacktrace."""
