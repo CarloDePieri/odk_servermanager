@@ -5,7 +5,7 @@
 ![Maintenance](https://img.shields.io/maintenance/yes/2020)
 [![Documentation Status](https://readthedocs.org/projects/odksm/badge/?version=latest)](https://odksm.readthedocs.io/en/latest/?badge=latest)
 
-[<img src="https://www.odkclan.it/immagini/loghi/logo_home.png" height="100">](https://www.odkclan.it/)
+[<img src="https://www.odkclan.it/img/ODK-logo.jpg" height="100">](https://www.odkclan.it/)
 
 ODKSM is an open source python tool to quickly and easily create more than one Arma 3 server instance and manage their
 settings, mods and keys. It does so by intelligently using symlinks, which keeps server instances' folders small, easy
