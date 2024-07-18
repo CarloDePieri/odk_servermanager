@@ -21,12 +21,9 @@ jobs:
           python-version: |
             3.8
 
-      - name: Check pwd
-        run: |
-          pwd
-          ls
-          cd ..
-          ls
+      - name: updating PATH to enable importing my package
+        run: echo "PYTHONPATH=D:/a/odk_servermanager/odk_servermanager" >> $GITHUB_ENV
+        shell: bash
 
       - name: Install dependencies
         run: |
@@ -36,7 +33,9 @@ jobs:
 
       - name: Run tests
         run: |
+          echo %PYTHONPATH%
           pipenv run pytest --cov=odk_servermanager tests
+        shell: cmd
 
       - name: Upload coverage
         run: |
