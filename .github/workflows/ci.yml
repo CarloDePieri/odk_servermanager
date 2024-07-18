@@ -24,6 +24,9 @@ jobs:
       - name: Check pwd
         run: |
           pwd
+          ls
+          cd ..
+          ls
 
       - name: Install dependencies
         run: |
