@@ -18,8 +18,8 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: |
-            3.8
+          python-version: 3.8
+          cache: 'pipenv'
 
       - name: updating PATH to enable importing my package
         run: echo "PYTHONPATH=D:/a/odk_servermanager/odk_servermanager" >> $GITHUB_ENV
@@ -37,6 +37,5 @@ jobs:
           pipenv run pytest --cov=odk_servermanager tests
         shell: cmd
 
-      - name: Upload coverage
-        run: |
-          pipenv run coveralls
+      - name: Coveralls
+        uses: coverallsapp/github-action@v2
