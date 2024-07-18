@@ -1,0 +1,27 @@
+name: Ci
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+
+  ci:
+    runs-on: windows-latest
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          choco install python --version=3.8.0
+          export PATH="/c/Python38:/c/Python38/Scripts:$PATH"
+          pip install pipenv
+          python -m venv .venv
+          pipenv install --dev
+
+      - name: Run tests
+        run: |
+          pipenv run pytest --cov=odk_servermanager tests
