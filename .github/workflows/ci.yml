@@ -2,7 +2,7 @@ name: Ci
 
 on:
   push:
-    branches: ["main"]
+    branches: ["master"]
   workflow_dispatch:
 
 jobs:
@@ -25,3 +25,7 @@ jobs:
       - name: Run tests
         run: |
           pipenv run pytest --cov=odk_servermanager tests
+
+      - name: Upload coverage
+        run: |
+          pipenv run coveralls
