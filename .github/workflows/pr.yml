@@ -1,13 +1,13 @@
-name: Ci
+name: PR
 
 on:
-  push:
+  pull_request:
     branches: ["master"]
   workflow_dispatch:
 
 jobs:
 
-  ci:
+  pr:
     runs-on: windows-latest
     steps:
 
@@ -29,13 +29,5 @@ jobs:
 
       - name: Run tests
         run: |
-          pipenv run pytest --cov=odk_servermanager tests
+          pipenv run pytest tests
         shell: cmd
-
-      - name: Prepare the coveralls config.
-        run: echo "COVERALLS_REPO_TOKEN=${{ secrets.COVERALLS_TOKEN }}" >> $GITHUB_ENV
-        shell: bash
-
-      - name: Upload coverage
-        run: |
-          pipenv run coveralls
