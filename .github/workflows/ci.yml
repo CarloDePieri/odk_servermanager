@@ -21,6 +21,10 @@ jobs:
           python-version: |
             3.8
 
+      - name: Check pwd
+        run: |
+          pwd
+
       - name: Install dependencies
         run: |
           pip install pipenv
