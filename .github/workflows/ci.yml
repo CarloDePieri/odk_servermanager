@@ -36,8 +36,7 @@ jobs:
         shell: cmd
 
       - name: Prepare the coveralls config.
-        run: |
-          echo "repo_token: ${{ secrets.COVERALLS_TOKEN }}" > .coveralls.yml
+        run: echo "COVERALLS_REPO_TOKEN=${{ secrets.COVERALLS_TOKEN }}" >> $GITHUB_ENV
         shell: bash
 
       - name: Upload coverage
