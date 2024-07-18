@@ -21,21 +21,25 @@ jobs:
           python-version: 3.8
           cache: 'pipenv'
 
-      - name: updating PATH to enable importing my package
+      - name: Install dependencies
+        run: |
+          curl https://raw.githubusercontent.com/pypa/pipenv/master/get-pipenv.py | python
+          pipenv install --dev
+
+      - name: Update PYTHONPATH to enable imports in tests
         run: echo "PYTHONPATH=D:/a/odk_servermanager/odk_servermanager" >> $GITHUB_ENV
         shell: bash
 
-      - name: Install dependencies
-        run: |
-          pip install pipenv
-          python -m venv .venv
-          pipenv install --dev
-
       - name: Run tests
         run: |
-          echo %PYTHONPATH%
           pipenv run pytest --cov=odk_servermanager tests
         shell: cmd
 
-      - name: Coveralls
-        uses: coverallsapp/github-action@v2
+      - name: Prepare the coveralls config.
+        run: |
+          echo "repo_token: ${{ secrets.COVERALLS_TOKEN }}" > .coveralls.yml
+        shell: bash
+
+      - name: Upload coverage
+        run: |
+          pipenv run coveralls
